@@ -8,7 +8,8 @@ export const Route = createFileRoute('/dashboard')({
 
 function RouteComponent() {
   const auth = useConvexAuth()
-  
+  console.log(auth)
+
   return (
     <div>
       <h1>Dashboard</h1>
