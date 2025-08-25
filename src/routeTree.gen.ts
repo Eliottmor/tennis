@@ -9,14 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as LoginSplatRouteImport } from './routes/login.$'
+import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
+import { Route as AuthedLaddersIndexRouteImport } from './routes/_authed/ladders/index'
+import { Route as AuthedLaddersLadderIdRouteImport } from './routes/_authed/ladders/$ladderId'
 
-const DashboardRoute = DashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
+const AuthedRoute = AuthedRouteImport.update({
+  id: '/_authed',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -34,48 +36,90 @@ const LoginSplatRoute = LoginSplatRouteImport.update({
   path: '/login/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedLaddersIndexRoute = AuthedLaddersIndexRouteImport.update({
+  id: '/ladders/',
+  path: '/ladders/',
+  getParentRoute: () => AuthedRoute,
+} as any)
+const AuthedLaddersLadderIdRoute = AuthedLaddersLadderIdRouteImport.update({
+  id: '/ladders/$ladderId',
+  path: '/ladders/$ladderId',
+  getParentRoute: () => AuthedRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/login/$': typeof LoginSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
+  '/ladders/$ladderId': typeof AuthedLaddersLadderIdRoute
+  '/ladders': typeof AuthedLaddersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/dashboard': typeof AuthedDashboardRoute
   '/login/$': typeof LoginSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
+  '/ladders/$ladderId': typeof AuthedLaddersLadderIdRoute
+  '/ladders': typeof AuthedLaddersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/dashboard': typeof DashboardRoute
+  '/_authed': typeof AuthedRouteWithChildren
+  '/_authed/dashboard': typeof AuthedDashboardRoute
   '/login/$': typeof LoginSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
+  '/_authed/ladders/$ladderId': typeof AuthedLaddersLadderIdRoute
+  '/_authed/ladders/': typeof AuthedLaddersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/login/$' | '/sign-up/$'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/login/$'
+    | '/sign-up/$'
+    | '/ladders/$ladderId'
+    | '/ladders'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/login/$' | '/sign-up/$'
-  id: '__root__' | '/' | '/dashboard' | '/login/$' | '/sign-up/$'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/login/$'
+    | '/sign-up/$'
+    | '/ladders/$ladderId'
+    | '/ladders'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authed'
+    | '/_authed/dashboard'
+    | '/login/$'
+    | '/sign-up/$'
+    | '/_authed/ladders/$ladderId'
+    | '/_authed/ladders/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  DashboardRoute: typeof DashboardRoute
+  AuthedRoute: typeof AuthedRouteWithChildren
   LoginSplatRoute: typeof LoginSplatRoute
   SignUpSplatRoute: typeof SignUpSplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/dashboard': {
-      id: '/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof DashboardRouteImport
+    '/_authed': {
+      id: '/_authed'
+      path: ''
+      fullPath: ''
+      preLoaderRoute: typeof AuthedRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -99,12 +143,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LoginSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/dashboard': {
+      id: '/_authed/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthedDashboardRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/ladders/': {
+      id: '/_authed/ladders/'
+      path: '/ladders'
+      fullPath: '/ladders'
+      preLoaderRoute: typeof AuthedLaddersIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/ladders/$ladderId': {
+      id: '/_authed/ladders/$ladderId'
+      path: '/ladders/$ladderId'
+      fullPath: '/ladders/$ladderId'
+      preLoaderRoute: typeof AuthedLaddersLadderIdRouteImport
+      parentRoute: typeof AuthedRoute
+    }
   }
 }
 
+interface AuthedRouteChildren {
+  AuthedDashboardRoute: typeof AuthedDashboardRoute
+  AuthedLaddersLadderIdRoute: typeof AuthedLaddersLadderIdRoute
+  AuthedLaddersIndexRoute: typeof AuthedLaddersIndexRoute
+}
+
+const AuthedRouteChildren: AuthedRouteChildren = {
+  AuthedDashboardRoute: AuthedDashboardRoute,
+  AuthedLaddersLadderIdRoute: AuthedLaddersLadderIdRoute,
+  AuthedLaddersIndexRoute: AuthedLaddersIndexRoute,
+}
+
+const AuthedRouteWithChildren =
+  AuthedRoute._addFileChildren(AuthedRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  DashboardRoute: DashboardRoute,
+  AuthedRoute: AuthedRouteWithChildren,
   LoginSplatRoute: LoginSplatRoute,
   SignUpSplatRoute: SignUpSplatRoute,
 }

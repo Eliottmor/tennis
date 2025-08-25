@@ -7,14 +7,15 @@ const authStateFn = createServerFn({ method: 'GET' }).handler(async () => {
   const request = getWebRequest()
   if (!request) throw new Error('No request found')
   
-  const { userId } = await getAuth(request)
+  const user = await getAuth(request)
+  console.log(user)
 
-  if (!userId) {
+  if (!user) {
     throw redirect({ to: '/login/$' })
   }
 
   return {
-    userId,
+    userId: user.userId,
   }
 })
 

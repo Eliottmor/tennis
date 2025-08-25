@@ -13,7 +13,7 @@ export function createRouter() {
   const convex = new ConvexReactClient(CONVEX_URL, {
     unsavedChangesWarning: false,
   })
-  const convexQueryClient = new ConvexQueryClient(CONVEX_URL)
+  const convexQueryClient = new ConvexQueryClient(convex)
 
   const queryClient: QueryClient = new QueryClient({
     defaultOptions: {
