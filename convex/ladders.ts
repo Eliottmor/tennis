@@ -391,14 +391,19 @@ export const getUserLadders = query({
 export const isUserMemberOfLadder = query({
   args: {
     ladderId: v.id("ladders"),
-    userId: v.id("users"),
+    userId: v.optional(v.id("users")),
   },
   returns: v.boolean(),
   handler: async (ctx, args) => {
+    // If no userId is provided, return false
+    if (!args.userId) {
+      return false;
+    }
+    
     const membership = await ctx.db
       .query("ladder_members")
       .withIndex("by_ladder_and_user", (q) =>
-        q.eq("ladderId", args.ladderId).eq("userId", args.userId)
+        q.eq("ladderId", args.ladderId).eq("userId", args.userId!)
       )
       .unique();
 

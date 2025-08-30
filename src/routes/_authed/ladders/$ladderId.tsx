@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LadderMembersTable } from '~/components/ladders-members-table'
+import { LadderPasswordAlert } from '~/components/ladder-password-alert'
 import { api } from 'convex/_generated/api'
-import { useQuery, useMutation } from 'convex/react'
+import { useMutation } from 'convex/react'
 import type { Id } from 'convex/_generated/dataModel'
 import { Heading } from '~/ui/heading'
 import { Button } from '~/ui/button'
@@ -9,6 +10,9 @@ import { toast } from 'sonner'
 import { ConvexError } from 'convex/values'
 import { formatDate } from '~/utils/date'
 import { useCurrentUser } from '~/hooks/useCurrentUser'
+import { convexQuery } from '@convex-dev/react-query'
+import { useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/_authed/ladders/$ladderId')({
   component: LadderDetails,
@@ -32,21 +36,27 @@ function mapConvexError(e: unknown): string {
 
 function LadderDetails() {
   const { ladderId } = Route.useParams()
-  const ladder = useQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
+  const { data: ladder, isLoading: isLoadingLadder } = useQuery(
+    convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
+  )
   const addUserToLadder = useMutation(api.ladders.addUserToLadder)
   const { userId, isAuthenticated } = useCurrentUser()
-  const isLoadingLadder = ladder === undefined
+  const [showPasswordAlert, setShowPasswordAlert] = useState(false)
 
-  // Check if current user is already a member of this ladder
-  const isUserMember = useQuery(
-    api.ladders.isUserMemberOfLadder,
-    userId && ladderId ? {
+  const { data: isUserMember, isLoading: isLoadingIsUserMember } = useQuery(
+    convexQuery(api.ladders.isUserMemberOfLadder, {
       ladderId: ladderId as Id<"ladders">,
-      userId: userId as Id<"users">
-    } : "skip"
+      userId: userId || undefined
+    })
   )
 
   const joinLadder = async () => {
+    // If ladder has password, show password alert instead of joining directly
+    if (ladder?.hasPassword) {
+      setShowPasswordAlert(true)
+      return
+    }
+
     try {
       await addUserToLadder({ ladderId: ladderId as Id<"ladders"> })
       toast.success('You have joined the ladder')
@@ -56,14 +66,20 @@ function LadderDetails() {
     }
   }
 
-  const formatStatus = (isActive: boolean, endDate: number): string => {
+  const handlePasswordSuccess = () => {
+    toast.success('You have joined the ladder')
+  }
+
+  const formatStatus = (isActive?: boolean, endDate?: number): string => {
+    if (!isActive || !endDate) return 'Inactive'
     if (!isActive) return 'Inactive'
     if (Date.now() > endDate) return 'Ended'
     if (Date.now() < endDate) return 'Active'
     return 'Active'
   }
 
-  const getStatusColor = (isActive: boolean, endDate: number): string => {
+  const getStatusColor = (isActive?: boolean, endDate?: number): string => {
+    if (!isActive || !endDate) return 'text-gray-500'
     if (!isActive) return 'text-gray-500'
     if (Date.now() > endDate) return 'text-orange-600'
     return 'text-green-600'
@@ -76,12 +92,12 @@ function LadderDetails() {
           <LadderHeaderSkeleton />
         ) : (
           <>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <Heading>
                   <div className="flex items-center gap-3">
-                    <span>{ladder.name}</span>
-                    {ladder.hasPassword && (
+                    <span>{ladder?.name}</span>
+                    {ladder?.hasPassword && (
                       <div className="flex items-center gap-1 text-orange-600">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -98,7 +114,7 @@ function LadderDetails() {
               <Button
                 color={isUserMember ? "white" : "green"}
                 onClick={joinLadder}
-                disabled={isUserMember || !isAuthenticated}
+                disabled={isUserMember || !isAuthenticated || isLoadingIsUserMember}
               >
                 {isUserMember ? "Already joined" : "Join Ladder"}
               </Button>
@@ -114,20 +130,20 @@ function LadderDetails() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
               <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Status</div>
-              <div className={`text-lg font-semibold ${getStatusColor(ladder.isActive, ladder.endDate)}`}>
-                {formatStatus(ladder.isActive, ladder.endDate)}
+              <div className={`text-lg font-semibold ${getStatusColor(ladder?.isActive, ladder?.endDate)}`}>
+                {formatStatus(ladder?.isActive, ladder?.endDate)}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 dark:text-gray-400">Start Date</div>
               <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                {formatDate(ladder.startDate)}
+                {formatDate(ladder?.startDate ?? 0)}
               </div>
             </div>
             <div>
               <div className="text-sm font-medium text-gray-500 dark:text-gray-400">End Date</div>
               <div className="text-lg font-semibold text-gray-900 dark:text-white">
-                {formatDate(ladder.endDate)}
+                {formatDate(ladder?.endDate ?? 0)}
               </div>
             </div>
           </div>
@@ -135,6 +151,15 @@ function LadderDetails() {
       )}
 
       <LadderMembersTable ladderId={ladderId as Id<"ladders">} />
+
+      <LadderPasswordAlert
+        ladderId={ladderId as Id<"ladders">}
+        ladderName={ladder?.name || 'this ladder'}
+        isOpen={showPasswordAlert}
+        onClose={() => setShowPasswordAlert(false)}
+        onSuccess={handlePasswordSuccess}
+        mapError={mapConvexError}
+      />
     </div>
   )
 }

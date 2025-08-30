@@ -32,4 +32,25 @@ export default defineSchema({
     .index("by_ladder", ["ladderId"])
     .index("by_user", ["userId"])
     .index("by_ladder_and_user", ["ladderId", "userId"]),
+
+  matches: defineTable({
+    ladderId: v.id("ladders"),
+    matchDate: v.number(), // Unix ms
+    winnerId: v.id("users"),
+    loserId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_ladder", ["ladderId"])
+    .index("by_winner", ["winnerId"])
+    .index("by_loser", ["loserId"]),
+
+  match_sets: defineTable({
+    matchId: v.id("matches"),
+    setNumber: v.number(),
+    winnerGames: v.number(),
+    loserGames: v.number(),
+    winnerTiebreak: v.optional(v.number()),
+    loserTiebreak: v.optional(v.number()),
+  })
+    .index("by_match", ["matchId"]),
 });

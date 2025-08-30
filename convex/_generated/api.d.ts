@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as crons from "../crons.js";
 import type * as ladders from "../ladders.js";
+import type * as matches from "../matches.js";
 import type * as myFunctions from "../myFunctions.js";
 import type * as users from "../users.js";
 
@@ -29,6 +30,7 @@ import type * as users from "../users.js";
 declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   ladders: typeof ladders;
+  matches: typeof matches;
   myFunctions: typeof myFunctions;
   users: typeof users;
 }>;

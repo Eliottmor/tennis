@@ -14,7 +14,7 @@ function RouteComponent() {
 
   return (
     <div>
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <Heading level={1}>Tennis Ladders</Heading>
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Manage your tennis ladder competitions</p>

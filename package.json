@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "npx convex dev --once && concurrently -r npm:dev:web npm:dev:convex",
-    "dev:web": "vite dev",
+    "dev:web": "vite dev --host",
     "dev:ts": "tsc -b -w",
     "dev:convex": "npx convex dev",
     "build": "vite build && tsc --noEmit",
