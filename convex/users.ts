@@ -21,9 +21,8 @@ export const store = mutation({
       )
       .unique();
     if (user !== null) {
-      // If we've seen this identity before but the name has changed, patch the value.
-      if (user.name !== identity.name) {
-        await ctx.db.patch(user._id, { name: identity.name });
+      if (user.name !== identity.name || user.imageUrl !== identity.pictureUrl?.toString()) {
+        await ctx.db.patch(user._id, { name: identity.name, imageUrl: identity.pictureUrl?.toString() ?? undefined });
       }
       return user._id;
     }
@@ -32,6 +31,7 @@ export const store = mutation({
       name: identity.name ?? "Anonymous",
       email: identity.email ?? "N/A",
       lastLogin: typeof identity.lastLogin === 'number' ? identity.lastLogin : Date.now(),
+      imageUrl: identity.pictureUrl?.toString() ?? undefined,
     });
   },
 });

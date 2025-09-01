@@ -2,7 +2,6 @@ import { useUser } from "@clerk/tanstack-react-start";
 import { useConvexAuth } from "convex/react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
-import type { Id } from "../../convex/_generated/dataModel";
 
 export function useCurrentUser() {
   const { isAuthenticated } = useConvexAuth();
@@ -20,5 +19,6 @@ export function useCurrentUser() {
     userId: currentUser?._id,
     isLoading: isAuthenticated && !currentUser,
     isAuthenticated,
+    imageUrl: user?.imageUrl,
   };
 }

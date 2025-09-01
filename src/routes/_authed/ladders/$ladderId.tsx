@@ -13,6 +13,8 @@ import { useCurrentUser } from '~/hooks/useCurrentUser'
 import { convexQuery } from '@convex-dev/react-query'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import ReportMatchDialog from '~/components/report-match-dialog'
+import PlayersDropdown from '~/components/players-dropdown'
 
 export const Route = createFileRoute('/_authed/ladders/$ladderId')({
   component: LadderDetails,
@@ -111,13 +113,20 @@ function LadderDetails() {
                   View and manage ladder members
                 </p>
               </div>
-              <Button
-                color={isUserMember ? "white" : "green"}
-                onClick={joinLadder}
-                disabled={isUserMember || !isAuthenticated || isLoadingIsUserMember}
-              >
-                {isUserMember ? "Already joined" : "Join Ladder"}
-              </Button>
+              <div className="space-x-2">
+                {isUserMember && 
+                  <ReportMatchDialog
+                    ladderId={ladderId as Id<"ladders">}
+                  />
+                }
+                <Button
+                  color={isUserMember ? "white" : "green"}
+                  onClick={joinLadder}
+                  disabled={isUserMember || !isAuthenticated || isLoadingIsUserMember}
+                >
+                  {isUserMember ? "Already joined" : "Join Ladder"}
+                </Button>
+              </div>
             </div>
           </>
         )}

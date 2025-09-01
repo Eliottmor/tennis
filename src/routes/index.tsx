@@ -8,7 +8,6 @@ const authStateFn = createServerFn({ method: 'GET' }).handler(async () => {
   if (!request) throw new Error('No request found')
   
   const user = await getAuth(request)
-  console.log(user)
 
   if (!user) {
     throw redirect({ to: '/login/$' })
@@ -30,9 +29,6 @@ export const Route = createFileRoute('/')({
 })
 
 function Home() {
-  const state = Route.useLoaderData()
-  console.log(state, 'hello??')
-
   return (
     <main className="p-8 flex flex-col items-center justify-center min-h-screen">
       <div className="text-center">

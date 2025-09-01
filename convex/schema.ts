@@ -13,6 +13,7 @@ export default defineSchema({
     name: v.string(),
     lastLogin: v.number(),
     email: v.string(),
+    imageUrl: v.optional(v.string()),
   }).index("by_email", ["email"]),
   
   ladders: defineTable({
