@@ -9,15 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
 import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
-import { Route as LoginSplatRouteImport } from './routes/login.$'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedLaddersIndexRouteImport } from './routes/_authed/ladders/index'
 import { Route as AuthedLaddersLadderIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/index'
 import { Route as AuthedLaddersLadderIdPlayerPlayerIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/player.$playerId/index'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
   getParentRoute: () => rootRouteImport,
@@ -25,16 +29,6 @@ const AuthedRoute = AuthedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SignUpSplatRoute = SignUpSplatRouteImport.update({
-  id: '/sign-up/$',
-  path: '/sign-up/$',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginSplatRoute = LoginSplatRouteImport.update({
-  id: '/login/$',
-  path: '/login/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthedDashboardRoute = AuthedDashboardRouteImport.update({
@@ -62,18 +56,16 @@ const AuthedLaddersLadderIdPlayerPlayerIdIndexRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/dashboard': typeof AuthedDashboardRoute
-  '/login/$': typeof LoginSplatRoute
-  '/sign-up/$': typeof SignUpSplatRoute
   '/ladders': typeof AuthedLaddersIndexRoute
   '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
   '/ladders/$ladderId/player/$playerId': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/login': typeof LoginRoute
   '/dashboard': typeof AuthedDashboardRoute
-  '/login/$': typeof LoginSplatRoute
-  '/sign-up/$': typeof SignUpSplatRoute
   '/ladders': typeof AuthedLaddersIndexRoute
   '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
   '/ladders/$ladderId/player/$playerId': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
@@ -82,9 +74,8 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/_authed': typeof AuthedRouteWithChildren
+  '/login': typeof LoginRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
-  '/login/$': typeof LoginSplatRoute
-  '/sign-up/$': typeof SignUpSplatRoute
   '/_authed/ladders/': typeof AuthedLaddersIndexRoute
   '/_authed/ladders/$ladderId/': typeof AuthedLaddersLadderIdIndexRoute
   '/_authed/ladders/$ladderId/player/$playerId/': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
@@ -93,18 +84,16 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/login'
     | '/dashboard'
-    | '/login/$'
-    | '/sign-up/$'
     | '/ladders'
     | '/ladders/$ladderId'
     | '/ladders/$ladderId/player/$playerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/login'
     | '/dashboard'
-    | '/login/$'
-    | '/sign-up/$'
     | '/ladders'
     | '/ladders/$ladderId'
     | '/ladders/$ladderId/player/$playerId'
@@ -112,9 +101,8 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/_authed'
+    | '/login'
     | '/_authed/dashboard'
-    | '/login/$'
-    | '/sign-up/$'
     | '/_authed/ladders/'
     | '/_authed/ladders/$ladderId/'
     | '/_authed/ladders/$ladderId/player/$playerId/'
@@ -123,12 +111,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
-  LoginSplatRoute: typeof LoginSplatRoute
-  SignUpSplatRoute: typeof SignUpSplatRoute
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authed': {
       id: '/_authed'
       path: ''
@@ -141,20 +135,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sign-up/$': {
-      id: '/sign-up/$'
-      path: '/sign-up/$'
-      fullPath: '/sign-up/$'
-      preLoaderRoute: typeof SignUpSplatRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login/$': {
-      id: '/login/$'
-      path: '/login/$'
-      fullPath: '/login/$'
-      preLoaderRoute: typeof LoginSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authed/dashboard': {
@@ -209,9 +189,17 @@ const AuthedRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
-  LoginSplatRoute: LoginSplatRoute,
-  SignUpSplatRoute: SignUpSplatRoute,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}

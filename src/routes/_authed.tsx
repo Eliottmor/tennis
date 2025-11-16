@@ -1,30 +1,36 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
-import { SignIn } from '@clerk/tanstack-react-start'
 import { SidebarLayout } from '../ui/sidebar-layout'
-import { UserButton } from "@clerk/tanstack-react-start"
 import { Sidebar, SidebarBody, SidebarFooter, SidebarHeader, SidebarItem, SidebarLabel, SidebarSection, SidebarSpacer } from '~/ui/sidebar'
+import { useConvexAuth } from 'convex/react'
+import { useCurrentUser } from '~/hooks/useCurrentUser'
 
 export const Route = createFileRoute('/_authed')({
-  beforeLoad: ({ context }) => {
-    if (!context.userId) {
-      throw new Error('Not authenticated')
-    }
+  beforeLoad: async () => {
+    // Authentication check will be handled in the component
+    return {}
   },
   errorComponent: ({ error }) => {
-    if (error.message === 'Not authenticated') {
-      return (
-        <div className="flex items-center justify-center p-12">
-          <SignIn routing="hash" forceRedirectUrl={window.location.href} />
-        </div>
-      )
-    }
-
     throw error
   },
   component: AuthedLayout,
 })
 
 function AuthedLayout() {
+  const { isAuthenticated, isLoading } = useConvexAuth()
+  const { user, imageUrl } = useCurrentUser()
+
+  if (isLoading) {
+    return <div>Loading...</div>
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center p-12">
+        <div>Please sign in to access this page</div>
+      </div>
+    )
+  }
+
   return (
     <SidebarLayout
       navbar={<></>}
@@ -45,15 +51,18 @@ function AuthedLayout() {
             <SidebarSpacer />
           </SidebarBody>
           <SidebarFooter>
-            <UserButton 
-              showName 
-              appearance={{
-                elements: {
-                  userButtonBox: "!flex-row-reverse hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors duration-200 rounded-lg pr-2",
-                  button: "hover:text-white"
-                }
-              }}
-            />
+            <div className="flex items-center p-2">
+              {imageUrl && (
+                <img
+                  src={imageUrl}
+                  alt="User avatar"
+                  className="w-8 h-8 rounded-full mr-2"
+                />
+              )}
+              <div className="flex-1">
+                <div className="text-sm font-medium">{user?.name || 'User'}</div>
+              </div>
+            </div>
           </SidebarFooter>
         </Sidebar>
       }

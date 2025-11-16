@@ -1,54 +1,26 @@
-import { createRouter as createTanStackRouter } from '@tanstack/react-router'
-import { QueryClient } from '@tanstack/react-query'
-import { routerWithQueryClient } from '@tanstack/react-router-with-query'
-import { ConvexQueryClient } from '@convex-dev/react-query'
-import { ConvexProvider, ConvexReactClient } from 'convex/react'
+import { createRouter } from '@tanstack/react-router'
+import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query'
+import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 import { routeTree } from './routeTree.gen'
 
-export function createRouter() {
-  const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL!
-  if (!CONVEX_URL) {
-    console.error('missing envar CONVEX_URL')
-  }  
-  const convex = new ConvexReactClient(CONVEX_URL, {
-    unsavedChangesWarning: false,
-  })
-  const convexQueryClient = new ConvexQueryClient(convex)
+export const getRouter = () => {
+  const rqContext = TanstackQuery.getContext()
 
-  const queryClient: QueryClient = new QueryClient({
-    defaultOptions: {
-      queries: {
-        queryKeyHashFn: convexQueryClient.hashFn(),
-        queryFn: convexQueryClient.queryFn(),
-        gcTime: 5000,
-      },
+  const router = createRouter({
+    routeTree,
+    context: { ...rqContext },
+    defaultPreload: 'intent',
+    Wrap: (props: { children: React.ReactNode }) => {
+      return (
+        <TanstackQuery.Provider {...rqContext}>
+          {props.children}
+        </TanstackQuery.Provider>
+      )
     },
   })
-  convexQueryClient.connect(queryClient)
 
-  const router = routerWithQueryClient(
-    createTanStackRouter({
-      routeTree,
-      defaultPreload: 'intent',
-      context: { queryClient, convexClient: convex, convexQueryClient },
-      scrollRestoration: true,
-      defaultPreloadStaleTime: 0, // Let React Query handle all caching
-      defaultErrorComponent: (err) => <p>{err.error.stack}</p>,
-      defaultNotFoundComponent: () => <p>not found</p>,
-      Wrap: ({ children }) => (
-        <ConvexProvider client={convexQueryClient.convexClient}>
-          {children}
-        </ConvexProvider>
-      ),
-    }),
-    queryClient,
-  )
+  setupRouterSsrQueryIntegration({ router, queryClient: rqContext.queryClient })
 
   return router
 }
 
-declare module '@tanstack/react-router' {
-  interface Register {
-    router: ReturnType<typeof createRouter>
-  }
-}

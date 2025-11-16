@@ -1,4 +1,3 @@
-import { useUser } from "@clerk/tanstack-react-start";
 import { useConvexAuth } from "convex/react";
 import { useEffect, useState } from "react";
 import { useMutation } from "convex/react";
@@ -7,7 +6,6 @@ import type { Id } from "../../convex/_generated/dataModel";
 
 export function useStoreUserEffect() {
   const { isLoading, isAuthenticated } = useConvexAuth();
-  const { user } = useUser();
   // When this state is set we know the server
   // has stored the user.
   const [userId, setUserId] = useState<Id<"users"> | null>(null);
@@ -30,7 +28,7 @@ export function useStoreUserEffect() {
     return () => setUserId(null);
     // Make sure the effect reruns if the user logs in with
     // a different identity
-  }, [isAuthenticated, storeUser, user?.id]);
+  }, [isAuthenticated, storeUser]);
   // Combine the local state with the state from context
   return {
     isLoading: isLoading || (isAuthenticated && userId === null),

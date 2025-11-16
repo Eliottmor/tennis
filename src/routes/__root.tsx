@@ -3,39 +3,18 @@ import {
   HeadContent,
   Scripts,
   Outlet,
-  useRouteContext,
 } from '@tanstack/react-router'
 import { QueryClient } from '@tanstack/react-query'
 import * as React from 'react'
 import appCss from '~/styles/app.css?url'
-import { ConvexReactClient } from 'convex/react'
-import { ClerkProvider, useAuth } from '@clerk/tanstack-react-start'
-import { createServerFn } from '@tanstack/react-start'
-import { getWebRequest } from '@tanstack/react-start/server'
-import { getAuth } from '@clerk/tanstack-react-start/server'
-import { ConvexQueryClient } from '@convex-dev/react-query'
-import { ConvexProviderWithClerk } from 'convex/react-clerk'
-import { useStoreUserEffect } from '~/hooks/useStoreUserEffect'
+import ConvexProvider from '../integrations/convex/provider'
 import { Toaster } from 'sonner'
 
-const fetchClerkAuth = createServerFn({ method: 'GET' }).handler(async () => {
-  const request = getWebRequest()
-  if (!request) throw new Error('No request found')
-
-  const auth = await getAuth(getWebRequest())
-  const token = await auth.getToken({ template: 'convex' })
-
-  return {
-    userId: auth.userId,
-    token,
-  }
-})
-
-export const Route = createRootRouteWithContext<{
+interface MyRouterContext {
   queryClient: QueryClient
-  convexClient: ConvexReactClient,
-  convexQueryClient: ConvexQueryClient
-}>()({
+}
+
+export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
     meta: [
       {
@@ -73,38 +52,20 @@ export const Route = createRootRouteWithContext<{
       { rel: 'icon', href: '/favicon.ico' },
     ],
   }),
-  beforeLoad: async (ctx) => {
-    const auth = await fetchClerkAuth()
-    const { userId, token } = auth
-    if (token) {
-      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token)
-    }
-    return {
-      userId,
-      token
-    }
-  },
   notFoundComponent: () => <div>Route not found</div>,
-  component: RootComponent,
+  shellComponent: RootComponent,
 })
 
 function RootComponent() {
-  const context = useRouteContext({ from: Route.id }) 
-
   return (
-    <ClerkProvider>
-      <ConvexProviderWithClerk client={context.convexClient} useAuth={useAuth}>
-        <RootDocument>
-          <Outlet />
-          <Toaster position="top-center" />
-        </RootDocument>
-      </ConvexProviderWithClerk>
-    </ClerkProvider>
+    <RootDocument>
+      <Outlet />
+      <Toaster position="top-center" />
+    </RootDocument>
   )
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-  useStoreUserEffect();
 
   return (
     <html>
@@ -112,7 +73,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body id="tennis-main">
-        {children}
+        <ConvexProvider>
+          {children}
+        </ConvexProvider>
         <Scripts />
       </body>
     </html>
