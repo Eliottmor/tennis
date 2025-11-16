@@ -41,11 +41,7 @@ const getStatusColor = (isActive: boolean, endDate: number): string => {
   return 'text-green-600'
 }
 
-export function LaddersTable() {
-  const { data: ladders, isPending } = useQuery(
-    convexQuery(api.ladders.getAllLadders, {})
-  )
-  
+export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPending: boolean }) {
   const router = useRouter()
   const cells: TableCell<Ladder>[] = [
     {
@@ -111,6 +107,7 @@ export function LaddersTable() {
       cells={cells}
       rows={ladders || []}
       isLoading={isPending}
+      isContentHeight
       skeletonRowCount={5}
       zeroStateContent={
         <div className="text-center py-12">

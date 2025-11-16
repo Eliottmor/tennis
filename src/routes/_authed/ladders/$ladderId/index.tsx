@@ -14,10 +14,17 @@ import { convexQuery } from '@convex-dev/react-query'
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import ReportMatchDialog from '~/components/report-match-dialog'
-import PlayersDropdown from '~/components/players-dropdown'
 
-export const Route = createFileRoute('/_authed/ladders/$ladderId')({
+export const Route = createFileRoute('/_authed/ladders/$ladderId/')({
   component: LadderDetails,
+  loader: async ({ context, params }) => {
+    const ladderId = params.ladderId as Id<'ladders'>
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.ladders.getLadderById, { ladderId })
+    )
+    return null
+  },
+  pendingComponent: () => <LadderHeaderSkeleton />,
 })
 
 function mapConvexError(e: unknown): string {
@@ -44,13 +51,15 @@ function LadderDetails() {
   const addUserToLadder = useMutation(api.ladders.addUserToLadder)
   const { userId, isAuthenticated } = useCurrentUser()
   const [showPasswordAlert, setShowPasswordAlert] = useState(false)
-
-  const { data: isUserMember, isLoading: isLoadingIsUserMember } = useQuery(
-    convexQuery(api.ladders.isUserMemberOfLadder, {
+  
+  const { data: isUserMember, isLoading: isLoadingIsUserMember } = useQuery({
+    ...convexQuery(api.ladders.isUserMemberOfLadder, {
       ladderId: ladderId as Id<"ladders">,
-      userId: userId || undefined
-    })
-  )
+      userId: userId
+    }),
+    enabled: !!userId
+  })
+  const hasLadderEnded = ladder?.endDate && Date.now() > ladder.endDate
 
   const joinLadder = async () => {
     // If ladder has password, show password alert instead of joining directly
@@ -74,16 +83,13 @@ function LadderDetails() {
 
   const formatStatus = (isActive?: boolean, endDate?: number): string => {
     if (!isActive || !endDate) return 'Inactive'
-    if (!isActive) return 'Inactive'
-    if (Date.now() > endDate) return 'Ended'
-    if (Date.now() < endDate) return 'Active'
+    if (hasLadderEnded) return 'Ended'
     return 'Active'
   }
 
   const getStatusColor = (isActive?: boolean, endDate?: number): string => {
     if (!isActive || !endDate) return 'text-gray-500'
-    if (!isActive) return 'text-gray-500'
-    if (Date.now() > endDate) return 'text-orange-600'
+    if (hasLadderEnded) return 'text-orange-600'
     return 'text-green-600'
   }
 
@@ -114,18 +120,21 @@ function LadderDetails() {
                 </p>
               </div>
               <div className="space-x-2">
-                {isUserMember && 
-                  <ReportMatchDialog
-                    ladderId={ladderId as Id<"ladders">}
-                  />
-                }
-                <Button
-                  color={isUserMember ? "white" : "green"}
-                  onClick={joinLadder}
-                  disabled={isUserMember || !isAuthenticated || isLoadingIsUserMember}
-                >
-                  {isUserMember ? "Already joined" : "Join Ladder"}
-                </Button>
+                {!isLoadingIsUserMember && userId &&
+                  <>
+                    {isUserMember && <ReportMatchDialog
+                      ladderId={ladderId as Id<"ladders">}
+                      disabled={!ladder?.isActive || !!hasLadderEnded}
+                    />} 
+                    <Button
+                      color={isUserMember ? "white" : "green"}
+                      onClick={joinLadder}
+                      disabled={isUserMember || !isAuthenticated || isLoadingIsUserMember}
+                    >
+                      {isUserMember ? "Already joined" : "Join Ladder"}
+                    </Button>
+                  </>
+                  }
               </div>
             </div>
           </>

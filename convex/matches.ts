@@ -30,6 +30,36 @@ export const reportMatch = mutation({
     await Promise.all([checkMember(args.winnerId), checkMember(args.loserId)]);
 
     const now = Date.now();
+    let winnerPointsAwarded = 50;
+    let loserPointsAwarded = 20;
+    let straightSets = false;
+    let winStreakBonus = false;
+    let bagelSetsWonByWinner = 0;
+
+    if (args.sets.length === 2 && args.sets[0].winnerGames > args.sets[0].loserGames && args.sets[1].winnerGames > args.sets[1].loserGames) {
+      winnerPointsAwarded += 5;
+      straightSets = true;
+    }
+
+    // Get winner's current ladder member data for win streak check
+    const winnerMember = await ctx.db
+      .query("ladder_members")
+      .withIndex("by_ladder_and_user", (q) =>
+        q.eq("ladderId", args.ladderId).eq("userId", args.winnerId)
+      )
+      .unique();
+
+    // Check for 3-match win streak by looking at current winStreak
+    if (winnerMember && winnerMember.winStreak === 2) {
+      winStreakBonus = true;
+      winnerPointsAwarded += 3; // Bonus points for 3-match win streak
+    }
+
+    for (const s of args.sets) {
+      if (s.winnerGames === 6 && s.loserGames === 0) {
+        bagelSetsWonByWinner += 1;
+      }
+    }
 
     const matchId = await ctx.db.insert("matches", {
       ladderId: args.ladderId,
@@ -37,6 +67,11 @@ export const reportMatch = mutation({
       winnerId: args.winnerId,
       loserId: args.loserId,
       createdAt: now,
+      winnerPointsAwarded: winnerPointsAwarded,
+      loserPointsAwarded: loserPointsAwarded,
+      straightSets: straightSets,
+      winStreakBonus: winStreakBonus,
+      bagelSetsWonByWinner: bagelSetsWonByWinner,
     });
 
     for (const s of args.sets) {
@@ -50,13 +85,39 @@ export const reportMatch = mutation({
       });
     }
 
+    // Update win streaks in ladder_members
+    // Winner's streak increases by 1
+    if (winnerMember) {
+      await ctx.db.patch(winnerMember._id, {
+        winStreak: winnerMember.winStreak + 1,
+        lastMatchAt: args.matchDate,
+        ladderPoints: winnerMember.ladderPoints + winnerPointsAwarded,
+      });
+    }
+
+    // Loser's streak resets to 0
+    const loserMember = await ctx.db
+      .query("ladder_members")
+      .withIndex("by_ladder_and_user", (q) =>
+        q.eq("ladderId", args.ladderId).eq("userId", args.loserId)
+      )
+      .unique();
+
+    if (loserMember) {
+      await ctx.db.patch(loserMember._id, {
+        winStreak: 0,
+        lastMatchAt: args.matchDate,
+        ladderPoints: loserMember.ladderPoints + loserPointsAwarded,
+      });
+    }
+
     return matchId;
   },
 });
 
 /**
  * 1) All singles matches for a user within a ladder (newest first),
- *    with sets attached.
+ *    with sets attached and user info.
  */
 export const listUserMatchesInLadder = query({
   args: {
@@ -64,7 +125,55 @@ export const listUserMatchesInLadder = query({
     userId: v.id("users"),
     limit: v.optional(v.number()),      // optional soft cap (e.g., 50)
   },
+  returns: v.object({
+    user: v.object({
+      _id: v.id("users"),
+      _creationTime: v.number(),
+      name: v.string(),
+      email: v.string(),
+      lastLogin: v.number(),
+      imageUrl: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      availability: v.optional(v.string()),
+    }),
+    matches: v.array(v.object({
+      _id: v.id("matches"),
+      _creationTime: v.number(),
+      ladderId: v.id("ladders"),
+      matchDate: v.number(),
+      winnerId: v.id("users"),
+      loserId: v.id("users"),
+      createdAt: v.number(),
+      winnerPointsAwarded: v.optional(v.number()),
+      loserPointsAwarded: v.optional(v.number()),
+      winStreakBonus: v.optional(v.boolean()),
+      straightSets: v.optional(v.boolean()),
+      bagelSetsWonByWinner: v.optional(v.number()),
+      sets: v.array(v.object({
+        _id: v.id("match_sets"),
+        _creationTime: v.number(),
+        matchId: v.id("matches"),
+        setNumber: v.number(),
+        winnerGames: v.number(),
+        loserGames: v.number(),
+        winnerTiebreak: v.optional(v.number()),
+        loserTiebreak: v.optional(v.number()),
+      })),
+      opponent: v.object({
+        _id: v.id("users"),
+        name: v.string(),
+        email: v.string(),
+        imageUrl: v.optional(v.string()),
+      }),
+    })),
+  }),
   handler: async (ctx, { ladderId, userId, limit }) => {
+    // Get user info
+    const user = await ctx.db.get(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
     // Matches where user is winner
     const won = await ctx.db
       .query("matches")
@@ -84,8 +193,8 @@ export const listUserMatchesInLadder = query({
 
     const trimmed = limit ? combined.slice(0, limit) : combined;
 
-    // Attach sets for each match
-    const results = await Promise.all(
+    // Attach sets and opponent info for each match
+    const matches = await Promise.all(
       trimmed.map(async (m) => {
         const sets = await ctx.db
           .query("match_sets")
@@ -93,11 +202,31 @@ export const listUserMatchesInLadder = query({
           .collect();
         // sort sets by setNumber just in case
         sets.sort((a, b) => a.setNumber - b.setNumber);
-        return { match: m, sets };
+        
+        // Get opponent info
+        const opponentId = m.winnerId === userId ? m.loserId : m.winnerId;
+        const opponent = await ctx.db.get(opponentId);
+        if (!opponent) {
+          throw new Error("Opponent not found");
+        }
+        
+        return { 
+          ...m,
+          sets,
+          opponent: {
+            _id: opponent._id,
+            name: opponent.name,
+            email: opponent.email,
+            imageUrl: opponent.imageUrl,
+          }
+        };
       })
     );
 
-    return results;
+    return {
+      user,
+      matches,
+    };
   },
 });
 

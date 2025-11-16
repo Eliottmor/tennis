@@ -2,33 +2,29 @@ import { Table, type TableCell } from '../ui/table'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 import type { Id } from 'convex/_generated/dataModel'
+import { useRouter } from '@tanstack/react-router'
 
-interface LadderMember {
-  _id: Id<"ladder_members">;
-  userId: Id<"users">;
-  userName: string;
-  userEmail: string;
-  joinedAt: number;
+type LadderMemberWithDetails = {
+  _id: Id<"ladder_members">
+  userId: Id<"users">
+  userName: string
+  userEmail: string
+  joinedAt: number
+  wins: number
+  losses: number
+  points: number
+  winStreak: number
 }
 
 interface LadderMembersTableProps {
   ladderId: Id<"ladders">;
 }
 
-const formatDate = (timestamp: number): string => {
-  return new Date(timestamp).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-}
 
 export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
   const members = useQuery(api.ladders.getLadderMembers, { ladderId })
-
-  const cells: TableCell<LadderMember>[] = [
+  const router = useRouter()
+  const cells: TableCell<LadderMemberWithDetails>[] = [
     {
       headerLabel: 'Name',
       renderCell: (member) => (
@@ -48,15 +44,24 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
       className: 'min-w-[200px]'
     },
     {
-      headerLabel: 'Joined Date',
+      headerLabel: 'Win/Loss Record',
+      renderCell: (member) => (
+        <>
+          <span className="text-gray-600 dark:text-gray-400">{member.wins} - {member.losses}</span>
+          {member.winStreak > 2 && <span className="ml-2">🔥</span>}
+        </>
+      ),
+      className: 'min-w-[150px]'
+    },
+    {
+      headerLabel: 'Points',
       renderCell: (member) => (
         <span className="text-gray-600 dark:text-gray-400">
-          {formatDate(member.joinedAt)}
+          {member.points}
         </span>
       ),
       className: 'min-w-[150px]'
     },
-
   ]
 
   return (
@@ -69,6 +74,7 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
         rows={members || []}
         isLoading={!members}
         skeletonRowCount={5}
+        isContentHeight
         zeroStateContent={
           <div className="text-center py-12">
             <div className="text-gray-500 dark:text-gray-400 mb-2">
@@ -79,6 +85,9 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
             </p>
           </div>
         }
+        onClick={(member) => {
+          router.navigate({ to: '/ladders/$ladderId/player/$playerId', params: { ladderId: ladderId, playerId: member.userId } })
+        }}
         striped
         dense
       />

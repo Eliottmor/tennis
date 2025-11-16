@@ -6,14 +6,13 @@ import { v } from "convex/values";
 // app will continue to work.
 // The schema provides more precise TypeScript types.
 export default defineSchema({
-  numbers: defineTable({
-    value: v.number(),
-  }),
   users: defineTable({
     name: v.string(),
     lastLogin: v.number(),
     email: v.string(),
     imageUrl: v.optional(v.string()),
+    phoneNumber: v.optional(v.string()),
+    availability: v.optional(v.string()),
   }).index("by_email", ["email"]),
   
   ladders: defineTable({
@@ -23,12 +22,17 @@ export default defineSchema({
     endDate: v.number(),   // Unix timestamp
     createdBy: v.id("users"),
     isActive: v.boolean(),
+    algorithm: v.string(),
   }).index("by_created_by", ["createdBy"]),
   
   ladder_members: defineTable({
     ladderId: v.id("ladders"),
     userId: v.id("users"),
     joinedAt: v.number(), // Unix timestamp
+
+    ladderPoints: v.number(),
+    winStreak: v.number(),
+    lastMatchAt: v.optional(v.number()),
   })
     .index("by_ladder", ["ladderId"])
     .index("by_user", ["userId"])
@@ -40,6 +44,13 @@ export default defineSchema({
     winnerId: v.id("users"),
     loserId: v.id("users"),
     createdAt: v.number(),
+
+    winnerPointsAwarded: v.optional(v.number()),
+    loserPointsAwarded: v.optional(v.number()),
+
+    winStreakBonus: v.optional(v.boolean()),
+    straightSets: v.boolean(),
+    bagelSetsWonByWinner: v.number()
   })
     .index("by_ladder", ["ladderId"])
     .index("by_winner", ["winnerId"])

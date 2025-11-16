@@ -15,7 +15,8 @@ import { Route as SignUpSplatRouteImport } from './routes/sign-up.$'
 import { Route as LoginSplatRouteImport } from './routes/login.$'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedLaddersIndexRouteImport } from './routes/_authed/ladders/index'
-import { Route as AuthedLaddersLadderIdRouteImport } from './routes/_authed/ladders/$ladderId'
+import { Route as AuthedLaddersLadderIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/index'
+import { Route as AuthedLaddersLadderIdPlayerPlayerIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/player.$playerId/index'
 
 const AuthedRoute = AuthedRouteImport.update({
   id: '/_authed',
@@ -46,27 +47,36 @@ const AuthedLaddersIndexRoute = AuthedLaddersIndexRouteImport.update({
   path: '/ladders/',
   getParentRoute: () => AuthedRoute,
 } as any)
-const AuthedLaddersLadderIdRoute = AuthedLaddersLadderIdRouteImport.update({
-  id: '/ladders/$ladderId',
-  path: '/ladders/$ladderId',
-  getParentRoute: () => AuthedRoute,
-} as any)
+const AuthedLaddersLadderIdIndexRoute =
+  AuthedLaddersLadderIdIndexRouteImport.update({
+    id: '/ladders/$ladderId/',
+    path: '/ladders/$ladderId/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
+const AuthedLaddersLadderIdPlayerPlayerIdIndexRoute =
+  AuthedLaddersLadderIdPlayerPlayerIdIndexRouteImport.update({
+    id: '/ladders/$ladderId/player/$playerId/',
+    path: '/ladders/$ladderId/player/$playerId/',
+    getParentRoute: () => AuthedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/login/$': typeof LoginSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
-  '/ladders/$ladderId': typeof AuthedLaddersLadderIdRoute
   '/ladders': typeof AuthedLaddersIndexRoute
+  '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
+  '/ladders/$ladderId/player/$playerId': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/login/$': typeof LoginSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
-  '/ladders/$ladderId': typeof AuthedLaddersLadderIdRoute
   '/ladders': typeof AuthedLaddersIndexRoute
+  '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
+  '/ladders/$ladderId/player/$playerId': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -75,8 +85,9 @@ export interface FileRoutesById {
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/login/$': typeof LoginSplatRoute
   '/sign-up/$': typeof SignUpSplatRoute
-  '/_authed/ladders/$ladderId': typeof AuthedLaddersLadderIdRoute
   '/_authed/ladders/': typeof AuthedLaddersIndexRoute
+  '/_authed/ladders/$ladderId/': typeof AuthedLaddersLadderIdIndexRoute
+  '/_authed/ladders/$ladderId/player/$playerId/': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -85,16 +96,18 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/login/$'
     | '/sign-up/$'
-    | '/ladders/$ladderId'
     | '/ladders'
+    | '/ladders/$ladderId'
+    | '/ladders/$ladderId/player/$playerId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/dashboard'
     | '/login/$'
     | '/sign-up/$'
-    | '/ladders/$ladderId'
     | '/ladders'
+    | '/ladders/$ladderId'
+    | '/ladders/$ladderId/player/$playerId'
   id:
     | '__root__'
     | '/'
@@ -102,8 +115,9 @@ export interface FileRouteTypes {
     | '/_authed/dashboard'
     | '/login/$'
     | '/sign-up/$'
-    | '/_authed/ladders/$ladderId'
     | '/_authed/ladders/'
+    | '/_authed/ladders/$ladderId/'
+    | '/_authed/ladders/$ladderId/player/$playerId/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -157,11 +171,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthedLaddersIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
-    '/_authed/ladders/$ladderId': {
-      id: '/_authed/ladders/$ladderId'
+    '/_authed/ladders/$ladderId/': {
+      id: '/_authed/ladders/$ladderId/'
       path: '/ladders/$ladderId'
       fullPath: '/ladders/$ladderId'
-      preLoaderRoute: typeof AuthedLaddersLadderIdRouteImport
+      preLoaderRoute: typeof AuthedLaddersLadderIdIndexRouteImport
+      parentRoute: typeof AuthedRoute
+    }
+    '/_authed/ladders/$ladderId/player/$playerId/': {
+      id: '/_authed/ladders/$ladderId/player/$playerId/'
+      path: '/ladders/$ladderId/player/$playerId'
+      fullPath: '/ladders/$ladderId/player/$playerId'
+      preLoaderRoute: typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRouteImport
       parentRoute: typeof AuthedRoute
     }
   }
@@ -169,14 +190,17 @@ declare module '@tanstack/react-router' {
 
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
-  AuthedLaddersLadderIdRoute: typeof AuthedLaddersLadderIdRoute
   AuthedLaddersIndexRoute: typeof AuthedLaddersIndexRoute
+  AuthedLaddersLadderIdIndexRoute: typeof AuthedLaddersLadderIdIndexRoute
+  AuthedLaddersLadderIdPlayerPlayerIdIndexRoute: typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
 }
 
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
-  AuthedLaddersLadderIdRoute: AuthedLaddersLadderIdRoute,
   AuthedLaddersIndexRoute: AuthedLaddersIndexRoute,
+  AuthedLaddersLadderIdIndexRoute: AuthedLaddersLadderIdIndexRoute,
+  AuthedLaddersLadderIdPlayerPlayerIdIndexRoute:
+    AuthedLaddersLadderIdPlayerPlayerIdIndexRoute,
 }
 
 const AuthedRouteWithChildren =

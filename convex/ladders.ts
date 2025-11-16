@@ -14,6 +14,7 @@ export const createLadder = mutation({
     endDate: v.number(),   // Unix timestamp
     createdBy: v.id("users"),
     autoAddCreator: v.optional(v.boolean()),
+    algorithm: v.optional(v.string()),
   },
   returns: v.object({
     ladderId: v.id("ladders"),
@@ -38,6 +39,7 @@ export const createLadder = mutation({
       endDate: args.endDate,
       createdBy: args.createdBy,
       isActive: true,
+      algorithm: args.algorithm || "points_v1",
     });
     
     // Automatically add the creator as a member
@@ -46,6 +48,8 @@ export const createLadder = mutation({
         ladderId,
         userId: args.createdBy,
         joinedAt: Date.now(),
+        ladderPoints: 0,
+        winStreak: 0,
       });
     }
     
@@ -113,6 +117,8 @@ export const addUserToLadder = mutation({
       ladderId: args.ladderId,
       userId: user._id,
       joinedAt: Date.now(),
+      ladderPoints: 0,
+      winStreak: 0,
     });
 
     return {
@@ -298,7 +304,7 @@ export const getLaddersByUser = query({
 });
 
 /**
- * Get all members of a ladder
+ * Get all members of a ladder with their win/loss records
  */
 export const getLadderMembers = query({
   args: {
@@ -310,6 +316,10 @@ export const getLadderMembers = query({
     userName: v.string(),
     userEmail: v.string(),
     joinedAt: v.number(),
+    wins: v.number(),
+    losses: v.number(),
+    points: v.number(),
+    winStreak: v.number(),
   })),
   handler: async (ctx, args) => {
     const members = await ctx.db
@@ -317,12 +327,36 @@ export const getLadderMembers = query({
       .withIndex("by_ladder", (q) => q.eq("ladderId", args.ladderId))
       .collect();
     
-    // Get user details for each member
+    // Get user details and win/loss stats for each member
     const membersWithDetails = await Promise.all(
       members.map(async (member) => {
         const user = await ctx.db.get(member.userId);
         if (!user) {
           throw new Error("User not found");
+        }
+        
+        // Calculate win/loss record for this user in this ladder
+        const won = await ctx.db
+          .query("matches")
+          .withIndex("by_winner", (q) => q.eq("winnerId", member.userId))
+          .collect();
+
+        const lost = await ctx.db
+          .query("matches")
+          .withIndex("by_loser", (q) => q.eq("loserId", member.userId))
+          .collect();
+
+        const matches = [...won, ...lost].filter((m) => m.ladderId === args.ladderId);
+        
+        let wins = 0;
+        let losses = 0;
+        
+        for (const match of matches) {
+          if (match.winnerId === member.userId) {
+            wins += 1;
+          } else {
+            losses += 1;
+          }
         }
         
         return {
@@ -331,6 +365,10 @@ export const getLadderMembers = query({
           userName: user.name,
           userEmail: user.email,
           joinedAt: member.joinedAt,
+          wins,
+          losses,
+          points: member.ladderPoints,
+          winStreak: member.winStreak,
         };
       })
     );

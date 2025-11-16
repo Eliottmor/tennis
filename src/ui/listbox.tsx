@@ -2,7 +2,7 @@
 
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
-import { Fragment } from 'react'
+import { Fragment, type CSSProperties } from 'react'
 
 export function Listbox<T>({
   className,
@@ -77,16 +77,20 @@ export function Listbox<T>({
       </Headless.ListboxButton>
       <Headless.ListboxOptions
         transition
+        portal
         anchor="selection end"
+        style={{
+          '--listbox-min-width': 'min(calc(var(--button-width, 16rem) + 1.75rem), calc(100vw - 3rem))',
+        } as CSSProperties}
         className={clsx(
           // Anchor positioning
           '[--anchor-offset:-1.625rem] [--anchor-padding:theme(spacing.4)] sm:[--anchor-offset:0.375rem]',
           // Base styles
-          'isolate w-max min-w-[calc(var(--button-width)+1.75rem)] select-none scroll-py-1 rounded-xl p-1 z-[70]',
+          'isolate w-full min-w-[var(--listbox-min-width)] max-w-[calc(100vw-1.5rem)] select-none scroll-py-1 rounded-xl p-1 z-[70] sm:w-max sm:max-w-none',
           // Invisible border that is only visible in `forced-colors` mode for accessibility purposes
           'outline outline-1 outline-transparent focus:outline-none',
-          // Handle scrolling when menu won't fit in viewport
-          'overflow-y-scroll overscroll-contain',
+          // Constrain height and enable scrolling (iOS Safari fix for tiny menu)
+          'max-h-[min(60vh,24rem)] overflow-y-auto overscroll-contain',
           // Popover background
           'bg-white/75 backdrop-blur-xl dark:bg-zinc-800/75',
           // Shadows
@@ -115,7 +119,6 @@ export function ListboxOption<T>({
     // Icons
     '[&>[data-slot=icon]]:size-5 [&>[data-slot=icon]]:shrink-0 sm:[&>[data-slot=icon]]:size-4',
     '[&>[data-slot=icon]]:text-zinc-500 [&>[data-slot=icon]]:group-data-[focus]/option:text-white [&>[data-slot=icon]]:dark:text-zinc-400',
-    'forced-colors:[&>[data-slot=icon]]:text-[CanvasText] forced-colors:[&>[data-slot=icon]]:group-data-[focus]/option:text-[Canvas]',
     // Avatars
     '[&>[data-slot=avatar]]:-mx-0.5 [&>[data-slot=avatar]]:size-6 sm:[&>[data-slot=avatar]]:size-5'
   )
@@ -130,8 +133,8 @@ export function ListboxOption<T>({
         return (
           <div
             className={clsx(
-              // Basic layout
-              'group/option grid cursor-default grid-cols-[theme(spacing.5),1fr] items-baseline gap-x-2 rounded-lg py-2.5 pl-2 pr-3.5 sm:grid-cols-[theme(spacing.4),1fr] sm:py-1.5 sm:pl-1.5 sm:pr-3',
+              // Basic layout - improved mobile height
+              'group/option grid cursor-default grid-cols-[theme(spacing.5),1fr] items-center gap-x-3 rounded-lg py-3 pl-3 pr-3.5 min-h-[44px] sm:grid-cols-[theme(spacing.4),1fr] sm:py-1.5 sm:pl-1.5 sm:pr-3 sm:min-h-0',
               // Typography
               'text-base/6 text-zinc-950 sm:text-sm/6 dark:text-white forced-colors:text-[CanvasText]',
               // Focus

@@ -18,9 +18,10 @@ import { Badge } from '~/ui/badge'
 interface ReportMatchDialogProps {
   ladderId: Id<'ladders'>
   trigger?: React.ReactNode
+  disabled?: boolean
 }
 
-const ReportMatchDialog = ({ ladderId, trigger }: ReportMatchDialogProps) => {
+const ReportMatchDialog = ({ ladderId, trigger, disabled }: ReportMatchDialogProps) => {
   const { user } = useCurrentUser()
   const [isOpen, setIsOpen] = useState(false)
 
@@ -31,7 +32,7 @@ const ReportMatchDialog = ({ ladderId, trigger }: ReportMatchDialogProps) => {
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)}>Report Match</Button>
+      <Button onClick={() => setIsOpen(true)} disabled={disabled}>Report Match</Button>
       <Dialog open={isOpen} onClose={setIsOpen}>
         <DialogTitle>Report Match Score</DialogTitle>
         <DialogBody>
