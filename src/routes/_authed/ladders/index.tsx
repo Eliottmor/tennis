@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Button } from '~/ui/button'
 import { CreateLadderDialog } from '~/components/create-ladder-dialog'
 import { LaddersTable } from '~/components/ladders-table'
-import { Heading } from '~/ui/heading'
+import { Heading, HeadingGreen } from '~/ui/heading'
 import { api } from 'convex/_generated/api'
 import { useQuery } from 'convex/react'
 
@@ -20,7 +20,7 @@ function RouteComponent() {
     <div>
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <Heading level={1}>Tennis Ladders</Heading>
+          <Heading level={1}>Tennis <HeadingGreen>Ladders</HeadingGreen></Heading>
           <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">Manage your tennis ladder competitions</p>
         </div>
         <Button

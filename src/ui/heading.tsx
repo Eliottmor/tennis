@@ -15,11 +15,11 @@ export function Heading({ className, level = 1, ...props }: HeadingProps) {
   )
 }
 
-export function HeadingBlue({ className, ...props }: HeadingProps) {
+export function HeadingGreen({ className, ...props }: HeadingProps) {
   return (
     <span
       {...props}
-      className={clsx(className, 'font-bold bg-linear-to-r from-[#005600] to-[#00aa44] bg-clip-text text-transparent')}
+      className={clsx(className, 'font-medium bg-linear-to-r from-[#005600] to-[#00aa44] dark:from-[#00aa44] dark:to-[#005600] bg-clip-text text-transparent')}
     />
   )
 }

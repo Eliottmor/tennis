@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Button } from '~/ui/button'
-import { HeadingBlue } from '~/ui/heading'
+import { HeadingGreen } from '~/ui/heading'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -32,7 +32,7 @@ function RouteComponent() {
           <div className="mt-24 sm:mt-32 lg:mt-16">
           </div>
           <h1 className="mt-10 text-5xl font-semibold tracking-tight text-pretty text-gray-900 dark:text-white sm:text-7xl transition-colors duration-200">
-            Tennis <HeadingBlue>Ladder</HeadingBlue>
+            Tennis <HeadingGreen>Ladder</HeadingGreen>
           </h1>
           <p className="mt-8 text-lg font-medium text-pretty text-gray-600 dark:text-gray-400 sm:text-xl/8 transition-colors duration-200">
             Login to your account to continue.
