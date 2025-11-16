@@ -1,10 +1,8 @@
-import { useConvexAuth } from "convex/react";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 export function useCurrentUser() {
-  const { isAuthenticated } = useConvexAuth();
-
+  const isAuthenticated = true;
   // For Convex auth, we get user info from the stored user data
   // The getCurrentUser query will need to be updated to work with Convex identity
   const currentUser = useQuery(

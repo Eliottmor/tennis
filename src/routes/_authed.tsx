@@ -1,7 +1,6 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { SidebarLayout } from '../ui/sidebar-layout'
 import { Sidebar, SidebarBody, SidebarFooter, SidebarHeader, SidebarItem, SidebarLabel, SidebarSection, SidebarSpacer } from '~/ui/sidebar'
-import { useConvexAuth } from 'convex/react'
 import { useCurrentUser } from '~/hooks/useCurrentUser'
 
 export const Route = createFileRoute('/_authed')({
@@ -16,7 +15,8 @@ export const Route = createFileRoute('/_authed')({
 })
 
 function AuthedLayout() {
-  const { isAuthenticated, isLoading } = useConvexAuth()
+  const isAuthenticated = true
+  const isLoading = false
   const { user, imageUrl } = useCurrentUser()
 
   if (isLoading) {

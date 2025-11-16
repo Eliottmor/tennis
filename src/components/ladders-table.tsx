@@ -1,9 +1,6 @@
 import { Table, type TableCell } from '../ui/table'
-import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { useRouter } from '@tanstack/react-router'
-import { convexQuery } from '@convex-dev/react-query'
-import { useQuery } from '@tanstack/react-query'
 
 interface Ladder {
   _id: Id<"ladders">;

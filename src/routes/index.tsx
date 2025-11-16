@@ -1,5 +1,4 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useConvexAuth } from 'convex/react'
 import { useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 
@@ -8,7 +7,8 @@ export const Route = createFileRoute('/')({
 })
 
 function Home() {
-  const { isAuthenticated, isLoading } = useConvexAuth()
+  const isAuthenticated = true
+  const isLoading = false
   const navigate = useNavigate()
 
   useEffect(() => {

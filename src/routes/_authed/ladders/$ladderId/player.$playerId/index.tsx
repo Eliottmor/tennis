@@ -5,8 +5,7 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { Badge } from '~/ui/badge'
 import { type FunctionReturnType } from "convex/server";
-import { convexQuery } from '@convex-dev/react-query'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery } from 'convex/react'
 import { PhoneIcon, MailIcon, ClockIcon, TrophyIcon } from 'lucide-react'
 
 type Result = FunctionReturnType<typeof api.matches.listUserMatchesInLadder>;
@@ -14,24 +13,15 @@ type Result = FunctionReturnType<typeof api.matches.listUserMatchesInLadder>;
 export const Route = createFileRoute(
   '/_authed/ladders/$ladderId/player/$playerId/',
 )({
-  loader: async ({ context, params }) => {
-    const ladderId = params.ladderId as Id<'ladders'>
-    const userId = params.playerId as Id<'users'>
-    await context.queryClient.ensureQueryData(
-      convexQuery(api.matches.listUserMatchesInLadder, { ladderId, userId })
-    )
-    return null
-  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const { ladderId, playerId } = Route.useParams()
-  const query = convexQuery(api.matches.listUserMatchesInLadder, {
+  const matches = useQuery(api.matches.listUserMatchesInLadder, {
     ladderId: ladderId as Id<'ladders'>,
     userId: playerId as Id<'users'>,
   })
-  const { data, isLoading } = useQuery(query)
 
   const tableCells: TableCell<Result['matches'][number]>[] = [
     {
@@ -115,8 +105,8 @@ function RouteComponent() {
   ]
 
   // Calculate stats
-  const totalMatches = data?.matches.length || 0
-  const wins = data?.matches.filter(match => match.winnerId === playerId).length || 0
+  const totalMatches = matches?.matches.length || 0
+  const wins = matches?.matches.filter(match => match.winnerId === playerId).length || 0
   const losses = totalMatches - wins
   const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0
 
@@ -128,29 +118,29 @@ function RouteComponent() {
           {/* Player Info */}
           <div className="flex-1">
             <Heading level={1} className="text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              {data?.user.name}
+              {matches?.user.name}
             </Heading>
             
             {/* Contact Info */}
             <div className="space-y-3">
-              {data?.user.email && (
+              {matches?.user.email && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                  <MailIcon className="w-4 h-4 flex-shrink-0" />
-                  <span className="break-all">{data.user.email}</span>
+                  <MailIcon className="w-4 h-4 shrink-0" />
+                  <span className="break-all">{matches.user.email}</span>
                 </div>
               )}
               
-              {data?.user.phoneNumber && (
+              {matches?.user.phoneNumber && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                   <PhoneIcon className="w-4 h-4 flex-shrink-0" />
-                  <span>{data.user.phoneNumber}</span>
+                  <span>{matches.user.phoneNumber}</span>
                 </div>
               )}
               
-              {data?.user.availability && (
+              {matches?.user.availability && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                   <ClockIcon className="w-4 h-4 flex-shrink-0" />
-                  <span>{data.user.availability}</span>
+                  <span>{matches.user.availability}</span>
                 </div>
               )}
             </div>
@@ -194,8 +184,8 @@ function RouteComponent() {
         
         <Table
           cells={tableCells}
-          rows={data?.matches || []}
-          isLoading={isLoading}
+          rows={matches?.matches || []}
+          isLoading={false}
           striped
           dense
           isContentHeight

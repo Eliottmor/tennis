@@ -10,20 +10,12 @@ import { toast } from 'sonner'
 import { ConvexError } from 'convex/values'
 import { formatDate } from '~/utils/date'
 import { useCurrentUser } from '~/hooks/useCurrentUser'
-import { convexQuery } from '@convex-dev/react-query'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery } from 'convex/react'
 import { useState } from 'react'
 import ReportMatchDialog from '~/components/report-match-dialog'
 
 export const Route = createFileRoute('/_authed/ladders/$ladderId/')({
   component: LadderDetails,
-  loader: async ({ context, params }) => {
-    const ladderId = params.ladderId as Id<'ladders'>
-    await context.queryClient.ensureQueryData(
-      convexQuery(api.ladders.getLadderById, { ladderId })
-    )
-    return null
-  },
   pendingComponent: () => <LadderHeaderSkeleton />,
 })
 
@@ -45,19 +37,14 @@ function mapConvexError(e: unknown): string {
 
 function LadderDetails() {
   const { ladderId } = Route.useParams()
-  const { data: ladder, isLoading: isLoadingLadder } = useQuery(
-    convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
-  )
+  const ladder = useQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
   const addUserToLadder = useMutation(api.ladders.addUserToLadder)
   const { userId, isAuthenticated } = useCurrentUser()
   const [showPasswordAlert, setShowPasswordAlert] = useState(false)
   
-  const { data: isUserMember, isLoading: isLoadingIsUserMember } = useQuery({
-    ...convexQuery(api.ladders.isUserMemberOfLadder, {
-      ladderId: ladderId as Id<"ladders">,
-      userId: userId
-    }),
-    enabled: !!userId
+  const isUserMember = useQuery(api.ladders.isUserMemberOfLadder, {
+    ladderId: ladderId as Id<"ladders">,
+    userId: userId
   })
   const hasLadderEnded = ladder?.endDate && Date.now() > ladder.endDate
 
@@ -96,9 +83,6 @@ function LadderDetails() {
   return (
     <div className="space-y-6">
       <div>
-        {isLoadingLadder ? (
-          <LadderHeaderSkeleton />
-        ) : (
           <>
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -120,7 +104,7 @@ function LadderDetails() {
                 </p>
               </div>
               <div className="space-x-2">
-                {!isLoadingIsUserMember && userId &&
+                {userId &&
                   <>
                     {isUserMember && <ReportMatchDialog
                       ladderId={ladderId as Id<"ladders">}
@@ -129,7 +113,7 @@ function LadderDetails() {
                     <Button
                       color={isUserMember ? "white" : "green"}
                       onClick={joinLadder}
-                      disabled={isUserMember || !isAuthenticated || isLoadingIsUserMember}
+                      disabled={isUserMember || !isAuthenticated}
                     >
                       {isUserMember ? "Already joined" : "Join Ladder"}
                     </Button>
@@ -138,12 +122,8 @@ function LadderDetails() {
               </div>
             </div>
           </>
-        )}
       </div>
 
-      {isLoadingLadder ? (
-        <LadderDetailsSkeleton />
-      ) : (
         <div className="bg-white dark:bg-zinc-900 rounded-lg py-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div>
@@ -166,7 +146,6 @@ function LadderDetails() {
             </div>
           </div>
         </div>
-      )}
 
       <LadderMembersTable ladderId={ladderId as Id<"ladders">} />
 

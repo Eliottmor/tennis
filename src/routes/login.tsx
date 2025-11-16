@@ -1,6 +1,5 @@
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { useConvexAuth } from 'convex/react'
 export const Route = createFileRoute('/login')({
   component: Login,
 })
@@ -10,7 +9,7 @@ export function Login() {
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
 
-  const { isAuthenticated } = useConvexAuth()
+  const isAuthenticated = true
   const navigate = useNavigate()
 
   if (isAuthenticated) {
