@@ -10,7 +10,16 @@ export function Heading({ className, level = 1, ...props }: HeadingProps) {
   return (
     <Element
       {...props}
-      className={clsx(className, 'text-2xl/8 font-semibold text-zinc-950 sm:text-xl/8 dark:text-white')}
+      className={clsx(className, 'text-2xl/7 font-extralight text-gray-900 sm:truncate sm:text-5xl sm:tracking-tight dark:text-white')}
+    />
+  )
+}
+
+export function HeadingBlue({ className, ...props }: HeadingProps) {
+  return (
+    <span
+      {...props}
+      className={clsx(className, 'font-bold bg-linear-to-r from-[#003399] to-[#00a1f1] bg-clip-text text-transparent')}
     />
   )
 }
