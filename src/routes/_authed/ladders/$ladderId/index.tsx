@@ -161,27 +161,6 @@ function LadderDetails() {
   )
 }
 
-const LadderDetailsSkeleton = () => {
-  return (
-    <div className="bg-white dark:bg-zinc-900 rounded-lg py-6 animate-pulse">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-        </div>
-        <div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-        </div>
-        <div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-12 mb-2"></div>
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 const LadderHeaderSkeleton = () => {
   return (
     <div className="animate-pulse">

@@ -1,43 +1,58 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect } from 'react'
-import { useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { Moon, Sun } from 'lucide-react'
+import { Button } from '~/ui/button'
+import { useMutation } from '@tanstack/react-query'
+import { HeadingBlue } from '~/ui/heading'
 
 export const Route = createFileRoute('/')({
-  component: Home,
+  component: RouteComponent,
 })
 
-function Home() {
-  const isAuthenticated = true
-  const isLoading = false
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated) {
-        navigate({ to: '/dashboard', replace: true })
-      } else {
-        navigate({ to: '/login', replace: true })
-      }
-    }
-  }, [isAuthenticated, isLoading, navigate])
-
+function RouteComponent() {
   return (
-    <main className="p-8 flex flex-col items-center justify-center min-h-screen">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-8">Welcome to Tennis Ladder</h1>
-        <Link
-          to="/login"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-colors"
-        >
-          Go to Login
-        </Link>
-        <Link 
-          to="/dashboard" 
-          className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-colors"
-        >
-          Go to Dashboard
-        </Link>
+    <div className="relative isolate overflow-hidden bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200">
+      <svg
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 size-full mask-[radial-gradient(100%_100%_at_top_right,white,transparent)] stroke-gray-900/10 dark:stroke-white/10"
+      >
+        <defs>
+          <pattern
+            x="50%"
+            y={-1}
+            id="0787a7c5-978c-4f66-83c7-11c213f99cb7"
+            width={200}
+            height={200}
+            patternUnits="userSpaceOnUse"
+          >
+            <path d="M.5 200V.5H200" fill="none" />
+          </pattern>
+        </defs>
+        <rect fill="url(#0787a7c5-978c-4f66-83c7-11c213f99cb7)" width="100%" height="100%" strokeWidth={0} />
+      </svg>
+      <div className="mx-auto max-w-7xl px-6 pt-10 pb-24 sm:pb-32 lg:flex lg:px-8 lg:py-40">
+        <div className="mx-auto max-w-2xl lg:mx-0 lg:shrink-0 lg:pt-8">
+          <div className="mt-24 sm:mt-32 lg:mt-16">
+          </div>
+          <h1 className="mt-10 text-5xl font-semibold tracking-tight text-pretty text-gray-900 dark:text-white sm:text-7xl transition-colors duration-200">
+            Tennis <HeadingBlue>Ladder</HeadingBlue>
+          </h1>
+          <p className="mt-8 text-lg font-medium text-pretty text-gray-600 dark:text-gray-400 sm:text-xl/8 transition-colors duration-200">
+            Login to your account to continue.
+          </p>
+          <Button
+            color="green"
+            href='/dashboard'
+            className="mt-8 w-96"
+            >
+             Go to dashboard
+          </Button>
+        </div>
+        <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:mt-0 lg:mr-0 lg:ml-10 lg:max-w-none lg:flex-none xl:ml-32">
+          <div className="max-w-3xl flex-none sm:max-w-5xl lg:max-w-none">
+
+          </div>
+        </div>
       </div>
-    </main>
+    </div>
   )
 }

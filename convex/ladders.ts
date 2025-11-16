@@ -1,7 +1,7 @@
 import { v, ConvexError } from "convex/values";
 import { query, mutation, internalQuery, internalMutation, internalAction } from "./_generated/server";
 import { internal } from "./_generated/api";
-import { Id } from "./_generated/dataModel";
+import type { Id } from "./_generated/dataModel";
 
 /**
  * Create a new ladder
@@ -462,7 +462,7 @@ export const getExpiredLadders = internalQuery({
     name: v.string(),
     endDate: v.number(),
   })),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     const now = Date.now();
     return await ctx.db
       .query("ladders")
@@ -524,7 +524,7 @@ export const setLadderActiveStatus = mutation({
 export const deactivateExpiredLadders = internalAction({
   args: {},
   returns: v.null(),
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     // Get all expired ladders
     const expiredLadders = await ctx.runQuery(internal.ladders.getExpiredLadders, {});
     

@@ -132,14 +132,14 @@ function RouteComponent() {
               
               {matches?.user.phoneNumber && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                  <PhoneIcon className="w-4 h-4 flex-shrink-0" />
+                  <PhoneIcon className="w-4 h-4 shrink-0" />
                   <span>{matches.user.phoneNumber}</span>
                 </div>
               )}
               
               {matches?.user.availability && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
-                  <ClockIcon className="w-4 h-4 flex-shrink-0" />
+                  <ClockIcon className="w-4 h-4 shrink-0" />
                   <span>{matches.user.availability}</span>
                 </div>
               )}

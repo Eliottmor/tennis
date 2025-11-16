@@ -19,7 +19,7 @@ export function HeadingBlue({ className, ...props }: HeadingProps) {
   return (
     <span
       {...props}
-      className={clsx(className, 'font-bold bg-linear-to-r from-[#003399] to-[#00a1f1] bg-clip-text text-transparent')}
+      className={clsx(className, 'font-bold bg-linear-to-r from-[#005600] to-[#00aa44] bg-clip-text text-transparent')}
     />
   )
 }
