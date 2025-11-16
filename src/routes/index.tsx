@@ -1,7 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { Moon, Sun } from 'lucide-react'
 import { Button } from '~/ui/button'
-import { useMutation } from '@tanstack/react-query'
 import { HeadingBlue } from '~/ui/heading'
 
 export const Route = createFileRoute('/')({
