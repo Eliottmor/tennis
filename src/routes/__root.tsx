@@ -7,7 +7,6 @@ import {
 import { QueryClient } from '@tanstack/react-query'
 import * as React from 'react'
 import appCss from '~/styles/app.css?url'
-import ConvexProvider from '../integrations/convex/provider'
 import { Toaster } from 'sonner'
 
 interface MyRouterContext {
@@ -73,9 +72,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body id="tennis-main">
-        <ConvexProvider>
-          {children}
-        </ConvexProvider>
+        {children}
         <Scripts />
       </body>
     </html>

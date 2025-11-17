@@ -1,8 +1,9 @@
 import { Table, type TableCell } from '../ui/table'
 import { api } from 'convex/_generated/api'
-import { useQuery } from 'convex/react'
 import type { Id } from 'convex/_generated/dataModel'
 import { useRouter } from '@tanstack/react-router'
+import { useQuery } from '@tanstack/react-query'
+import { convexQuery } from '@convex-dev/react-query'
 
 type LadderMemberWithDetails = {
   _id: Id<"ladder_members">
@@ -22,7 +23,7 @@ interface LadderMembersTableProps {
 
 
 export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
-  const members = useQuery(api.ladders.getLadderMembers, { ladderId })
+  const { data: members } = useQuery(convexQuery(api.ladders.getLadderMembers, { ladderId }))
   const router = useRouter()
   const cells: TableCell<LadderMemberWithDetails>[] = [
     {

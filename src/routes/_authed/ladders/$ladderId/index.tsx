@@ -13,9 +13,17 @@ import { useCurrentUser } from '~/hooks/useCurrentUser'
 import { useQuery } from 'convex/react'
 import { useState } from 'react'
 import ReportMatchDialog from '~/components/report-match-dialog'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { convexQuery } from '@convex-dev/react-query'
 
 export const Route = createFileRoute('/_authed/ladders/$ladderId/')({
   component: LadderDetails,
+  loader: async ({ context, params }) => {
+    const { ladderId } = params
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
+    )
+  },
   pendingComponent: () => <LadderHeaderSkeleton />,
 })
 
@@ -37,7 +45,7 @@ function mapConvexError(e: unknown): string {
 
 function LadderDetails() {
   const { ladderId } = Route.useParams()
-  const ladder = useQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
+  const {data: ladder} = useSuspenseQuery(convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> }))
   const addUserToLadder = useMutation(api.ladders.addUserToLadder)
   const { userId, isAuthenticated } = useCurrentUser()
   const [showPasswordAlert, setShowPasswordAlert] = useState(false)

@@ -5,16 +5,22 @@ import { CreateLadderDialog } from '~/components/create-ladder-dialog'
 import { LaddersTable } from '~/components/ladders-table'
 import { Heading, HeadingGreen } from '~/ui/heading'
 import { api } from 'convex/_generated/api'
-import { useQuery } from 'convex/react'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { convexQuery } from '@convex-dev/react-query'
 
 export const Route = createFileRoute('/_authed/ladders/')({
   component: RouteComponent,
+  loader: async ({ context }) => {
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.ladders.getAllLadders, {})
+    )
+  },
   pendingComponent: () => <LaddersTableSkeleton />,
 })
 
 function RouteComponent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const ladders = useQuery(api.ladders.getAllLadders, {})
+  const { data: ladders } = useSuspenseQuery(convexQuery(api.ladders.getAllLadders, {}))
 
   return (
     <div>

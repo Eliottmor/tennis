@@ -12,10 +12,11 @@ import { Link as RouterLink } from '@tanstack/react-router'
 
 export const Link = forwardRef(function Link(
   props: { href: string } & React.ComponentPropsWithoutRef<typeof RouterLink>,
+  ref: React.ForwardedRef<HTMLAnchorElement>,
 ) {
   return (
     <Headless.DataInteractive>
-      <RouterLink {...props} />
+      <RouterLink {...props} ref={ref} />
     </Headless.DataInteractive>
   )
 })

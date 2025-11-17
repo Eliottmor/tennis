@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { Heading, HeadingGreen } from '~/ui/heading'
 
 export const Route = createFileRoute('/_authed/dashboard')({
   component: RouteComponent,
@@ -7,7 +8,7 @@ export const Route = createFileRoute('/_authed/dashboard')({
 function RouteComponent() {
   return (
     <div>
-      <h1 className="text-2xl font-bold text-zinc-900 dark:text-white">Dashboard</h1>
+      <Heading level={1}><HeadingGreen>Dashboard</HeadingGreen></Heading>
       <p className="mt-2 text-zinc-600 dark:text-zinc-400">Welcome to your tennis ladder dashboard</p>
       
       <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">

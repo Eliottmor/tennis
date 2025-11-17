@@ -5,23 +5,34 @@ import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { Badge } from '~/ui/badge'
 import { type FunctionReturnType } from "convex/server";
-import { useQuery } from 'convex/react'
 import { PhoneIcon, MailIcon, ClockIcon, TrophyIcon } from 'lucide-react'
+import { convexQuery } from '@convex-dev/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 
 type Result = FunctionReturnType<typeof api.matches.listUserMatchesInLadder>;
 
 export const Route = createFileRoute(
   '/_authed/ladders/$ladderId/player/$playerId/',
 )({
+  loader: async ({ context, params }) => {
+    const { ladderId, playerId } = params
+    await context.queryClient.ensureQueryData(
+      convexQuery(api.matches.listUserMatchesInLadder, {
+        ladderId: ladderId as Id<'ladders'>,
+        userId: playerId as Id<'users'>,
+      })
+    )
+  },
   component: RouteComponent,
 })
 
 function RouteComponent() {
   const { ladderId, playerId } = Route.useParams()
-  const matches = useQuery(api.matches.listUserMatchesInLadder, {
-    ladderId: ladderId as Id<'ladders'>,
-    userId: playerId as Id<'users'>,
-  })
+  const { data: matches } = useSuspenseQuery(convexQuery(api.matches.listUserMatchesInLadder, {
+      ladderId: ladderId as Id<'ladders'>,
+      userId: playerId as Id<'users'>,
+    })
+  )
 
   const tableCells: TableCell<Result['matches'][number]>[] = [
     {
@@ -126,21 +137,21 @@ function RouteComponent() {
               {matches?.user.email && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                   <MailIcon className="w-4 h-4 shrink-0" />
-                  <span className="break-all">{matches.user.email}</span>
+                  <span className="break-all">{matches?.user.email}</span>
                 </div>
               )}
               
               {matches?.user.phoneNumber && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                   <PhoneIcon className="w-4 h-4 shrink-0" />
-                  <span>{matches.user.phoneNumber}</span>
+                  <span>{matches?.user.phoneNumber}</span>
                 </div>
               )}
               
               {matches?.user.availability && (
                 <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                   <ClockIcon className="w-4 h-4 shrink-0" />
-                  <span>{matches.user.availability}</span>
+                  <span>{matches?.user.availability}</span>
                 </div>
               )}
             </div>

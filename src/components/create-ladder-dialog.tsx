@@ -8,6 +8,7 @@ import { useState } from 'react'
 import { useCurrentUser } from '../hooks/useCurrentUser'
 import { useMutation } from 'convex/react'
 import { api } from 'convex/_generated/api'
+import { HeadingGreen } from '~/ui/heading'
 
 type LadderFormData = {
   name: string
@@ -80,7 +81,7 @@ export function CreateLadderDialog({
   
   return (
     <Dialog open={isDialogOpen} onClose={setIsDialogOpen} size="md">
-        <DialogTitle>Create Ladder</DialogTitle>
+        <DialogTitle>Create <HeadingGreen>Ladder</HeadingGreen></DialogTitle>
         <form onSubmit={handleSubmit(onSubmit)}>
           <DialogBody>
             {error && (
@@ -183,7 +184,7 @@ export function CreateLadderDialog({
             <Button type="button" outline onClick={handleCancel}>
               Cancel
             </Button>
-            <Button type="submit" color="blue" disabled={isSubmitting}>
+            <Button type="submit" color="green" disabled={isSubmitting}>
               {isSubmitting ? 'Creating...' : 'Create Ladder'}
             </Button>
           </DialogActions>
