@@ -16,6 +16,7 @@ import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
 import { authClient } from "~/lib/auth-client";
 import { type ConvexQueryClient } from '@convex-dev/react-query'
 import type { ConvexReactClient } from 'convex/react'
+import { ThemeProvider } from '~/contexts/theme-context'
 
 interface MyRouterContext {
   queryClient: QueryClient
@@ -91,20 +92,35 @@ function RootComponent() {
   const context = useRouteContext({ from: Route.id })
   return (
     <ConvexBetterAuthProvider client={context.convexQueryClient.convexClient} authClient={authClient}>
-      <RootDocument>
-        <Outlet />
-        <Toaster position="top-center" />
-      </RootDocument>
+      <ThemeProvider>
+        <RootDocument>
+          <Outlet />
+          <Toaster position="top-center" />
+        </RootDocument>
+      </ThemeProvider>
     </ConvexBetterAuthProvider>
   )
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
-
   return (
     <html>
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                const theme = localStorage.getItem('tennis-ladder-theme');
+                const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                const isDark = theme === 'dark' || (!theme && systemPrefersDark);
+                if (isDark) {
+                  document.documentElement.classList.add('dark');
+                }
+              })();
+            `,
+          }}
+        />
       </head>
       <body id="tennis-main">
         {children}

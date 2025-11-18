@@ -3,6 +3,7 @@ import { Button } from '~/ui/button'
 import { HeadingGreen } from '~/ui/heading'
 import { signInWithGoogle } from '~/lib/auth-client'
 import { useMutation } from '@tanstack/react-query'
+import { ThemeToggle } from '~/components/theme-toggle'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
@@ -14,9 +15,12 @@ function RouteComponent() {
   })
   return (
     <div className="relative isolate overflow-hidden bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200">
+      <div className="absolute top-6 right-6 z-10">
+        <ThemeToggle />
+      </div>
       <svg
         aria-hidden="true"
-        className="absolute inset-0 -z-10 size-full mask-[radial-gradient(100%_100%_at_top_right,white,transparent)] stroke-gray-200"
+        className="absolute inset-0 -z-10 size-full mask-[radial-gradient(100%_100%_at_top_right,white,transparent)] dark:mask-[radial-gradient(100%_100%_at_top_right,rgb(17,24,39),transparent)] stroke-gray-200 dark:stroke-gray-800"
       >
         <defs>
           <pattern
@@ -30,7 +34,7 @@ function RouteComponent() {
             <path d="M.5 200V.5H200" fill="none" />
           </pattern>
         </defs>
-        <svg x="50%" y={-1} className="overflow-visible fill-gray-50">
+        <svg x="50%" y={-1} className="overflow-visible fill-gray-50 dark:fill-gray-900">
           <path
             d="M-200 0h201v201h-201Z M600 0h201v201h-201Z M-400 600h201v201h-201Z M200 800h201v201h-201Z"
             strokeWidth={0}
