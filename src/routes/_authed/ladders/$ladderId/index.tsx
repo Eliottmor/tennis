@@ -96,7 +96,7 @@ function LadderDetails() {
               <div>
                 <Heading>
                   <div className="flex items-center gap-3">
-                    <HeadingGreen className="text-2xl!">{ladder?.name}</HeadingGreen>
+                    <HeadingGreen className="text-3xl!">{ladder?.name}</HeadingGreen>
                     {ladder?.hasPassword && (
                       <div className="flex items-center gap-1 text-orange-600">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
