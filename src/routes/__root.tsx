@@ -3,15 +3,36 @@ import {
   HeadContent,
   Scripts,
   Outlet,
+  useRouteContext,
 } from '@tanstack/react-router'
 import { QueryClient } from '@tanstack/react-query'
 import * as React from 'react'
 import appCss from '~/styles/app.css?url'
 import { Toaster } from 'sonner'
+import { createServerFn } from '@tanstack/react-start'
+import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start'
+import { getCookie, getRequest } from '@tanstack/react-start/server'
+import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
+import { authClient } from "~/lib/auth-client";
+import { type ConvexQueryClient } from '@convex-dev/react-query'
+import type { ConvexReactClient } from 'convex/react'
 
 interface MyRouterContext {
   queryClient: QueryClient
+  convexQueryClient: ConvexQueryClient
+  convexClient: ConvexReactClient
 }
+
+const fetchAuth = createServerFn({ method: 'GET' }).handler(async () => {
+  const { createAuth } = await import('../../convex/auth')
+  const { session } = await fetchSession(getRequest())
+  const sessionCookieName = getCookieName(createAuth)
+  const token = getCookie(sessionCookieName)
+  return {
+    userId: session?.user.id,
+    token,
+  }
+})
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
   head: () => ({
@@ -51,16 +72,30 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
       { rel: 'icon', href: '/favicon.ico' },
     ],
   }),
+  beforeLoad: async (ctx) => {
+    // all queries, mutations and action made with TanStack Query will be
+    // authenticated by an identity token.
+    const { userId, token } = await fetchAuth()
+    // During SSR only (the only time serverHttpClient exists),
+    // set the auth token to make HTTP queries with.
+    if (token) {
+      ctx.context.convexQueryClient.serverHttpClient?.setAuth(token)
+    }
+    return { userId, token }
+  },
   notFoundComponent: () => <div>Route not found</div>,
   shellComponent: RootComponent,
 })
 
 function RootComponent() {
+  const context = useRouteContext({ from: Route.id })
   return (
-    <RootDocument>
-      <Outlet />
-      <Toaster position="top-center" />
-    </RootDocument>
+    <ConvexBetterAuthProvider client={context.convexQueryClient.convexClient} authClient={authClient}>
+      <RootDocument>
+        <Outlet />
+        <Toaster position="top-center" />
+      </RootDocument>
+    </ConvexBetterAuthProvider>
   )
 }
 

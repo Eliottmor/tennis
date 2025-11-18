@@ -14,6 +14,7 @@ import { Route as AuthedRouteImport } from './routes/_authed'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedLaddersIndexRouteImport } from './routes/_authed/ladders/index'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as AuthedLaddersLadderIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/index'
 import { Route as AuthedLaddersLadderIdPlayerPlayerIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/player.$playerId/index'
 
@@ -41,6 +42,11 @@ const AuthedLaddersIndexRoute = AuthedLaddersIndexRouteImport.update({
   path: '/ladders/',
   getParentRoute: () => AuthedRoute,
 } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthedLaddersLadderIdIndexRoute =
   AuthedLaddersLadderIdIndexRouteImport.update({
     id: '/ladders/$ladderId/',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/ladders': typeof AuthedLaddersIndexRoute
   '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
   '/ladders/$ladderId/player/$playerId': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
@@ -66,6 +73,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthedDashboardRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/ladders': typeof AuthedLaddersIndexRoute
   '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
   '/ladders/$ladderId/player/$playerId': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
@@ -76,6 +84,7 @@ export interface FileRoutesById {
   '/_authed': typeof AuthedRouteWithChildren
   '/login': typeof LoginRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/_authed/ladders/': typeof AuthedLaddersIndexRoute
   '/_authed/ladders/$ladderId/': typeof AuthedLaddersLadderIdIndexRoute
   '/_authed/ladders/$ladderId/player/$playerId/': typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/api/auth/$'
     | '/ladders'
     | '/ladders/$ladderId'
     | '/ladders/$ladderId/player/$playerId'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/dashboard'
+    | '/api/auth/$'
     | '/ladders'
     | '/ladders/$ladderId'
     | '/ladders/$ladderId/player/$playerId'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/_authed'
     | '/login'
     | '/_authed/dashboard'
+    | '/api/auth/$'
     | '/_authed/ladders/'
     | '/_authed/ladders/$ladderId/'
     | '/_authed/ladders/$ladderId/player/$playerId/'
@@ -112,6 +124,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthedRoute: typeof AuthedRouteWithChildren
   LoginRoute: typeof LoginRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -150,6 +163,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/ladders'
       preLoaderRoute: typeof AuthedLaddersIndexRouteImport
       parentRoute: typeof AuthedRoute
+    }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authed/ladders/$ladderId/': {
       id: '/_authed/ladders/$ladderId/'
@@ -190,6 +210,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthedRoute: AuthedRouteWithChildren,
   LoginRoute: LoginRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

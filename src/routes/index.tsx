@@ -1,12 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Button } from '~/ui/button'
 import { HeadingGreen } from '~/ui/heading'
+import { signInWithGoogle } from '~/lib/auth-client'
+import { useMutation } from '@tanstack/react-query'
 
 export const Route = createFileRoute('/')({
   component: RouteComponent,
 })
 
 function RouteComponent() {
+  const signIn = useMutation({
+    mutationFn: signInWithGoogle,
+  })
   return (
     <div className="relative isolate overflow-hidden bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200">
       <svg
@@ -39,10 +44,11 @@ function RouteComponent() {
           </p>
           <Button
             color="green"
-            href='/dashboard'
+            onClick={() => signIn.mutate()}
             className="mt-8 w-96"
+            disabled={signIn.isPending}
             >
-             Go to dashboard
+             {signIn.isPending ? 'Signing in...' : 'Sign in with Google'}
           </Button>
         </div>
         <div className="mx-auto mt-16 flex max-w-2xl sm:mt-24 lg:mt-0 lg:mr-0 lg:ml-10 lg:max-w-none lg:flex-none xl:ml-32">
