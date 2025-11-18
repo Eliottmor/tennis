@@ -4,7 +4,7 @@ import { LadderPasswordAlert } from '~/components/ladder-password-alert'
 import { api } from 'convex/_generated/api'
 import { useMutation } from 'convex/react'
 import type { Id } from 'convex/_generated/dataModel'
-import { Heading } from '~/ui/heading'
+import { Heading, HeadingGreen } from '~/ui/heading'
 import { Button } from '~/ui/button'
 import { toast } from 'sonner'
 import { ConvexError } from 'convex/values'
@@ -45,7 +45,7 @@ function mapConvexError(e: unknown): string {
 
 function LadderDetails() {
   const { ladderId } = Route.useParams()
-  const {data: ladder} = useSuspenseQuery(convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> }))
+  const { data: ladder } = useSuspenseQuery(convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> }))
   const addUserToLadder = useMutation(api.ladders.addUserToLadder)
   const { userId, isAuthenticated } = useCurrentUser()
   const [showPasswordAlert, setShowPasswordAlert] = useState(false)
@@ -96,7 +96,7 @@ function LadderDetails() {
               <div>
                 <Heading>
                   <div className="flex items-center gap-3">
-                    <span>{ladder?.name}</span>
+                    <HeadingGreen className="text-2xl!">{ladder?.name}</HeadingGreen>
                     {ladder?.hasPassword && (
                       <div className="flex items-center gap-1 text-orange-600">
                         <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">

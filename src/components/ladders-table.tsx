@@ -35,7 +35,7 @@ const formatStatus = (isActive: boolean, endDate: number): string => {
 
 const getStatusColor = (isActive: boolean, endDate: number): string => {
   if (!isActive) return 'text-gray-500'
-  if (Date.now() > endDate) return 'text-orange-600'
+  if (Date.now() > endDate) return 'text-red-600'
   return 'text-green-600'
 }
 
