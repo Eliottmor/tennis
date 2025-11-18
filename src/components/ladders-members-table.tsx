@@ -33,7 +33,8 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
           {member.userName}
         </div>
       ),
-      className: 'min-w-[150px]'
+      className: 'min-w-[150px]',
+      mobileVisibility: 'always'
     },
     {
       headerLabel: 'Email',
@@ -42,7 +43,9 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
           {member.userEmail}
         </span>
       ),
-      className: 'min-w-[200px]'
+      className: 'min-w-[200px]',
+      mobileVisibility: 'sm',
+      mobileLabel: 'Email'
     },
     {
       headerLabel: 'Win/Loss Record',
@@ -52,7 +55,8 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
           {member.winStreak > 2 && <span className="ml-2">🔥</span>}
         </>
       ),
-      className: 'min-w-[150px]'
+      className: 'min-w-[150px]',
+      mobileVisibility: 'always'
     },
     {
       headerLabel: 'Points',
@@ -61,7 +65,8 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
           {member.points}
         </span>
       ),
-      className: 'min-w-[150px]'
+      className: 'min-w-[150px]',
+      mobileVisibility: 'always'
     },
   ]
 

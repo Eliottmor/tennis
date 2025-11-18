@@ -1,6 +1,7 @@
 import { Table, type TableCell } from '../ui/table'
 import type { Id } from 'convex/_generated/dataModel'
 import { useRouter } from '@tanstack/react-router'
+import { Text } from '~/ui/text';
 
 interface Ladder {
   _id: Id<"ladders">;
@@ -44,7 +45,7 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
     {
       headerLabel: 'Name',
       renderCell: (ladder) => (
-        <div className="font-medium text-gray-900 dark:text-white">
+        <Text className="text-gray-900 dark:text-white">
           {ladder.name}
           {ladder.hasPassword && (
             <svg 
@@ -59,9 +60,10 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
               />
             </svg>
           )}
-        </div>
+        </Text>
       ),
-      className: 'min-w-[200px]'
+      className: 'min-w-[200px]',
+      mobileVisibility: 'always'
     },
     {
       headerLabel: 'Status',
@@ -70,7 +72,8 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
           {formatStatus(ladder.isActive, ladder.endDate)}
         </span>
       ),
-      className: 'min-w-[100px]'
+      className: 'min-w-[100px]',
+      mobileVisibility: 'always'
     },
     {
       headerLabel: 'Start Date',
@@ -79,7 +82,9 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
           {formatDate(ladder.startDate)}
         </span>
       ),
-      className: 'min-w-[120px]'
+      className: 'min-w-[120px]',
+      mobileVisibility: 'never',
+      mobileLabel: 'Start Date'
     },
     {
       headerLabel: 'End Date',
@@ -88,14 +93,18 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
           {formatDate(ladder.endDate)}
         </span>
       ),
-      className: 'min-w-[120px]'
+      className: 'min-w-[120px]',
+      mobileVisibility: 'always',
+      mobileLabel: 'End Date'
     },
     {
       headerLabel: 'Created By',
       renderCell: (ladder) => (
         <span className="text-gray-600 dark:text-gray-400">{ladder.creator?.name || 'Unknown'}</span>
       ),
-      className: 'min-w-[120px]'
+      className: 'min-w-[120px]',
+      mobileVisibility: 'never',
+      mobileLabel: 'Created By'
     },
   ]
 
@@ -122,7 +131,6 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
           params: { ladderId: ladder._id },
         })
       }}
-      striped
       dense
     />
   )

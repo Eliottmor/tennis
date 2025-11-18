@@ -1,6 +1,5 @@
 import clsx from 'clsx'
-import type React from 'react'
-import { createContext, type ReactNode, useContext, useRef, useState, useMemo } from 'react'
+import React, { createContext, type ReactNode, useContext, useRef, useState, useMemo } from 'react'
 import { Link } from '@tanstack/react-router'
 import { useRemainingHeight } from '~/hooks/use-remaining-height'
 import { ArrowDownIcon, ArrowUpIcon } from '~/components/icons'
@@ -10,6 +9,8 @@ export interface TableCell<T> {
   headerLabel: string
   className?: string
   sortKey?: keyof T
+  mobileVisibility?: 'always' | 'sm' | 'lg' | 'never'
+  mobileLabel?: string
 }
 
 interface TableProps<T> {
@@ -91,13 +92,31 @@ export function Table<T>({
   const skeletonRows = getSkeletonRows(skeletonRowCount)
   const tableRows = isLoading ? skeletonRows : sortedRows
 
+  // Find the first column that's always visible (for mobile stacking)
+  const firstVisibleColumnIndex = cells.findIndex(cell => (cell.mobileVisibility ?? 'always') === 'always')
+  const firstColumnIndex = firstVisibleColumnIndex >= 0 ? firstVisibleColumnIndex : 0
+
+  // Collect columns that should stack on mobile (not always visible and not never)
+  const mobileStackColumns = cells
+    .map((cell, index) => ({ cell, index }))
+    .filter(({ cell }) => {
+      const visibility = cell.mobileVisibility ?? 'always'
+      return visibility !== 'always' && visibility !== 'never'
+    })
+
   return (
     <>
       <ComposableTable striped={striped} dense={dense} bleed={bleed} rows={rows} isLoading={isLoading} isContentHeight={isContentHeight} sortBy={sortBy} sortDirection={sortDirection} onSort={handleSort}>
         <ComposableTableHead>
           <ComposableTableRow>
             {cells.map((cell: TableCell<T>, i: number) => (
-              <ComposableTableHeader className={cell.className} key={`table-header-${i}`} sortKey={cell.sortKey}>
+              <ComposableTableHeader 
+                className={cell.className} 
+                key={`table-header-${i}`} 
+                sortKey={cell.sortKey}
+                mobileVisibility={cell.mobileVisibility ?? 'always'}
+                isFirstHeader={i === firstColumnIndex}
+              >
                 {cell.headerLabel} 
               </ComposableTableHeader>
             ))}
@@ -115,14 +134,50 @@ export function Table<T>({
                 }
               }}
             >
-              {cells.map(({ renderCell, className }: TableCell<T>, cellIndex: number) => {
-                return (
-                  <ComposableTableCell key={`table-cell-${cellIndex}`} className={className}>
-                    {isSkeletonRow(row) ? (
-                      <SkeletonCell />
-                    ) : (
-                      renderCell(row)
+              {cells.map((cell: TableCell<T>, cellIndex: number) => {
+                const isFirstCell = cellIndex === firstColumnIndex
+                const mobileVisibility = cell.mobileVisibility ?? 'always'
+                const { renderCell, className: cellClassName } = cell
+                
+                // For the first cell, include mobile stacking content
+                const cellContent = isSkeletonRow(row) ? (
+                  <SkeletonCell />
+                ) : (
+                  <>
+                    {renderCell(row)}
+                    {isFirstCell && mobileStackColumns.length > 0 && (
+                      <dl className="font-normal lg:hidden">
+                        {mobileStackColumns.map(({ cell: stackCell, index: stackIndex }) => {
+                          const stackVisibility = stackCell.mobileVisibility ?? 'always'
+                          const stackLabel = stackCell.mobileLabel || stackCell.headerLabel
+                          
+                          // Determine which breakpoint to hide at based on visibility
+                          // If visibility is 'lg', show in dl (no additional class needed since dl is lg:hidden)
+                          // If visibility is 'sm', hide at sm (show only on mobile)
+                          const hideAtBreakpoint = stackVisibility === 'sm' ? 'sm:hidden' : ''
+                          
+                          return (
+                            <React.Fragment key={`mobile-stack-${stackIndex}`}>
+                              <dt className={clsx('sr-only', hideAtBreakpoint)}>{stackLabel}</dt>
+                              <dd className={clsx('mt-1 truncate text-gray-700 dark:text-gray-300', hideAtBreakpoint)}>
+                                {stackCell.renderCell(row)}
+                              </dd>
+                            </React.Fragment>
+                          )
+                        })}
+                      </dl>
                     )}
+                  </>
+                )
+
+                return (
+                  <ComposableTableCell 
+                    key={`table-cell-${cellIndex}`} 
+                    className={cellClassName}
+                    mobileVisibility={mobileVisibility}
+                    isFirstCell={isFirstCell}
+                  >
+                    {cellContent}
                   </ComposableTableCell>
                 )
               })}
@@ -194,9 +249,9 @@ export function ComposableTable({
   return (
     <TableContext.Provider value={{ bleed, dense, grid, striped, sortBy, sortDirection, onSort } as React.ContextType<typeof TableContext>}>
       <div className="flow-root">
-        <div ref={componentRef} {...props} style={{ height: isContentHeight ? 'auto' : height }} className={clsx(className, '-mx-[--gutter] whitespace-nowrap overflow-x-auto')}>
+        <div ref={componentRef} {...props} style={{ height: isContentHeight ? 'auto' : height }} className={clsx(className, '-mx-4 sm:mx-0 whitespace-nowrap overflow-x-auto')}>
           <div className={clsx('inline-block w-32 sm:min-w-full align-middle', !bleed && 'sm:px-[--gutter]')}>
-            <table className="min-w-full text-left text-sm/6 text-zinc-950 dark:text-white">{children}</table>
+            <table className="min-w-full divide-y divide-gray-300 text-left text-sm/6 text-zinc-950 dark:text-white">{children}</table>
           </div>
         </div>
       </div>
@@ -205,11 +260,11 @@ export function ComposableTable({
 }
 
 export function ComposableTableHead({ className, ...props }: React.ComponentPropsWithoutRef<'thead'>) {
-  return <thead {...props} className={clsx(className, 'text-zinc-500 dark:text-zinc-400')} />
+  return <thead {...props} className={clsx(className)} />
 }
 
 export function ComposableTableBody(props: React.ComponentPropsWithoutRef<'tbody'>) {
-  return <tbody {...props} />
+  return <tbody {...props} className="divide-y divide-gray-200 bg-white dark:bg-zinc-950" />
 }
 
 const TableRowContext = createContext<{ href?: string; target?: string; title?: string }>({
@@ -248,13 +303,17 @@ export function ComposableTableRow({
 export function ComposableTableHeader({ 
   className, 
   sortKey, 
-  children, 
+  children,
+  mobileVisibility = 'always',
+  isFirstHeader = false,
   ...props 
 }: React.ComponentPropsWithoutRef<'th'> & { 
   sortable?: boolean; 
-  sortKey?: any; 
+  sortKey?: any;
+  mobileVisibility?: 'always' | 'sm' | 'lg' | 'never';
+  isFirstHeader?: boolean;
 }) {
-  const { bleed, grid, sortBy, sortDirection, onSort } = useContext(TableContext)
+  const { grid, sortBy, sortDirection, onSort } = useContext(TableContext)
 
   const handleSort = () => {
     if (!sortKey || !onSort) return
@@ -274,16 +333,29 @@ export function ComposableTableHeader({
   const showUpArrow = sortKey && isActive && sortDirection === 'asc'
   const showDownArrow = sortKey && isActive && sortDirection === 'desc'
 
+  // Determine visibility classes based on mobileVisibility
+  const visibilityClass = mobileVisibility === 'always' 
+    ? '' 
+    : mobileVisibility === 'sm' 
+    ? 'hidden sm:table-cell' 
+    : mobileVisibility === 'lg'
+    ? 'hidden lg:table-cell'
+    : mobileVisibility === 'never'
+    ? 'hidden sm:table-cell'
+    : ''
+
   return (
     <th
       {...props}
+      scope="col"
       className={clsx(
         className,
+        visibilityClass,
         'sticky top-0 z-1 bg-white shadow-sm',
         'bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/75 dark:bg-zinc-950/95 dark:supports-backdrop-filter:bg-zinc-950/75',
-        'border-b border-b-zinc-950/10 px-4 py-2 font-medium first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2)) dark:border-b-white/10',
+        'py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white',
+        isFirstHeader ? 'pr-3 pl-4 sm:pl-0' : 'px-3',
         grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-white/5',
-        !bleed && 'sm:first:pl-1 sm:last:pr-1',
         sortKey && 'cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900/50'
       )}
       onClick={handleSort}
@@ -305,10 +377,30 @@ export function ComposableTableHeader({
   )
 }
 
-export function ComposableTableCell({ className, children, ...props }: React.ComponentPropsWithoutRef<'td'>) {
-  const { bleed, dense, grid, striped } = useContext(TableContext)
+export function ComposableTableCell({ 
+  className, 
+  children,
+  mobileVisibility = 'always',
+  isFirstCell = false,
+  ...props 
+}: React.ComponentPropsWithoutRef<'td'> & {
+  mobileVisibility?: 'always' | 'sm' | 'lg' | 'never';
+  isFirstCell?: boolean;
+}) {
+  const { grid } = useContext(TableContext)
   const { href, target, title } = useContext(TableRowContext)
   const [cellRef, setCellRef] = useState<HTMLElement | null>(null)
+
+  // Determine visibility classes based on mobileVisibility
+  const visibilityClass = mobileVisibility === 'always' 
+    ? '' 
+    : mobileVisibility === 'sm' 
+    ? 'hidden sm:table-cell' 
+    : mobileVisibility === 'lg'
+    ? 'hidden lg:table-cell'
+    : mobileVisibility === 'never'
+    ? 'hidden sm:table-cell'
+    : ''
 
   return (
     <td
@@ -316,11 +408,11 @@ export function ComposableTableCell({ className, children, ...props }: React.Com
       {...props}
       className={clsx(
         className,
-        'relative px-4 first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2))',
-        !striped && 'border-b border-zinc-950/5 dark:border-b-white/5',
-        grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-white/5',
-        dense ? 'py-2.5' : 'py-4',
-        !bleed && 'sm:first:pl-1 sm:last:pr-1'
+        visibilityClass,
+        'relative py-4 text-sm',
+        isFirstCell && 'w-full max-w-0 py-4 pr-3 pl-4 text-sm font-medium text-gray-900 dark:text-white sm:w-auto sm:max-w-none sm:pl-0',
+        !isFirstCell && 'px-3 text-gray-500 dark:text-gray-400',
+        grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-white/5'
       )}
     >
       {href && (
