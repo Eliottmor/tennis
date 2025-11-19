@@ -84,7 +84,7 @@ function LadderDetails() {
 
   const getStatusColor = (isActive?: boolean, endDate?: number): string => {
     if (!isActive || !endDate) return 'text-gray-500'
-    if (hasLadderEnded) return 'text-orange-600'
+    if (hasLadderEnded) return 'text-red-600'
     return 'text-green-600'
   }
 
