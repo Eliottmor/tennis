@@ -6,6 +6,7 @@ import { Avatar } from '~/ui/avatar'
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronUpIcon,
+  CogIcon,
 } from '@heroicons/react/16/solid'
 import {
   NumberedListIcon,
@@ -14,6 +15,8 @@ import {
 import { api } from '../../convex/_generated/api'
 import { convexQuery } from '@convex-dev/react-query'
 import { signOut } from '~/lib/auth-client'
+import { useMutation } from 'convex/react'
+import { useEffect, useRef } from 'react'
 
 export const Route = createFileRoute('/_authed')({
   beforeLoad: async (ctx) => {
@@ -35,7 +38,19 @@ function AuthedLayout() {
   const { user } = Route.useRouteContext()
   const navigate = useNavigate()
   const location = useLocation()
-  console.log(user)
+  const storeUser = useMutation(api.users.store)
+  const hasStoredUser = useRef(false)
+  
+  // Store/update user in database after authentication completes
+  useEffect(() => {
+    if (user && !hasStoredUser.current) {
+      hasStoredUser.current = true
+      storeUser({}).catch((error) => {
+        console.error('Failed to store user:', error)
+        hasStoredUser.current = false // Reset on error so we can retry
+      })
+    }
+  }, [user, storeUser])
   
   const handleSignOut = async () => {
     await signOut()
@@ -96,6 +111,12 @@ function AuthedLayout() {
                   </span>
                 </DropdownButton>
                 <DropdownMenu className="min-w-64" anchor="top start">
+                  <DropdownItem href="/settings">
+                    <span data-slot="icon">
+                      <CogIcon />
+                    </span>
+                    <DropdownLabel>Settings</DropdownLabel>
+                  </DropdownItem>
                   <DropdownDivider />
                   <DropdownItem onClick={handleSignOut}>
                     <span data-slot="icon">

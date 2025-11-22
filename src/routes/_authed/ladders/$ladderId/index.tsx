@@ -10,7 +10,6 @@ import { toast } from 'sonner'
 import { ConvexError } from 'convex/values'
 import { formatDate } from '~/utils/date'
 import { useCurrentUser } from '~/hooks/useCurrentUser'
-import { useQuery } from 'convex/react'
 import { useState } from 'react'
 import ReportMatchDialog from '~/components/report-match-dialog'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -20,9 +19,21 @@ export const Route = createFileRoute('/_authed/ladders/$ladderId/')({
   component: LadderDetails,
   loader: async ({ context, params }) => {
     const { ladderId } = params
-    await context.queryClient.ensureQueryData(
-      convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
-    )
+    const user = context.user
+    const userId = user?._id ? (user._id as Id<"users">) : undefined
+    
+    // Fetch both queries in parallel
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        convexQuery(api.ladders.getLadderById, { ladderId: ladderId as Id<"ladders"> })
+      ),
+      context.queryClient.ensureQueryData(
+        convexQuery(api.ladders.isUserMemberOfLadder, { 
+          ladderId: ladderId as Id<"ladders">,
+          userId
+        })
+      )
+    ])
   },
   pendingComponent: () => <LadderHeaderSkeleton />,
 })
@@ -50,10 +61,12 @@ function LadderDetails() {
   const { userId, isAuthenticated } = useCurrentUser()
   const [showPasswordAlert, setShowPasswordAlert] = useState(false)
   
-  const isUserMember = useQuery(api.ladders.isUserMemberOfLadder, {
-    ladderId: ladderId as Id<"ladders">,
-    userId: userId
-  })
+  const { data: isUserMember } = useSuspenseQuery(
+    convexQuery(api.ladders.isUserMemberOfLadder, {
+      ladderId: ladderId as Id<"ladders">,
+      userId: userId
+    })
+  )
   const hasLadderEnded = ladder?.endDate && Date.now() > ladder.endDate
 
   const joinLadder = async () => {

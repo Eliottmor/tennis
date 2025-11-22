@@ -320,6 +320,8 @@ export const getLadderMembers = query({
     losses: v.number(),
     points: v.number(),
     winStreak: v.number(),
+    city: v.optional(v.string()),
+    status: v.optional(v.string()),
   })),
   handler: async (ctx, args) => {
     const members = await ctx.db
@@ -369,6 +371,8 @@ export const getLadderMembers = query({
           losses,
           points: member.ladderPoints,
           winStreak: member.winStreak,
+          city: user.city,
+          status: user.status,
         };
       })
     );

@@ -5,8 +5,8 @@ import {
   Outlet,
   useRouteContext,
 } from '@tanstack/react-router'
-import { QueryClient } from '@tanstack/react-query'
-import * as React from 'react'
+import type { QueryClient } from '@tanstack/react-query'
+import type * as React from 'react'
 import appCss from '~/styles/app.css?url'
 import { Toaster } from 'sonner'
 import { createServerFn } from '@tanstack/react-start'
@@ -14,7 +14,7 @@ import { fetchSession, getCookieName } from '@convex-dev/better-auth/react-start
 import { getCookie, getRequest } from '@tanstack/react-start/server'
 import { ConvexBetterAuthProvider } from '@convex-dev/better-auth/react'
 import { authClient } from "~/lib/auth-client";
-import { type ConvexQueryClient } from '@convex-dev/react-query'
+import type { ConvexQueryClient } from '@convex-dev/react-query'
 import type { ConvexReactClient } from 'convex/react'
 import { ThemeProvider } from '~/contexts/theme-context'
 
@@ -85,6 +85,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     return { userId, token }
   },
   notFoundComponent: () => <div>Route not found</div>,
+  errorComponent: () => <div>Error</div>,
   shellComponent: RootComponent,
 })
 
@@ -104,7 +105,7 @@ function RootComponent() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   return (
-    <html>
+    <html lang="en">
       <head>
         <HeadContent />
         <script

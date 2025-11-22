@@ -1,19 +1,17 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
+import { authComponent } from "./auth";
 
 export const store = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();
+    const authUser = await authComponent.safeGetAuthUser(ctx)
+
     if (!identity) {
       throw new Error("Called storeUser without authentication present");
     }
 
-    // Check if we've already stored this identity before.
-    // Note: If you don't want to define an index right away, you can use
-    // ctx.db.query("users")
-    //  .filter(q => q.eq(q.field("tokenIdentifier"), identity.tokenIdentifier))
-    //  .unique();
     const user = await ctx.db
       .query("users")
       .withIndex("by_email", (q) =>
@@ -21,8 +19,8 @@ export const store = mutation({
       )
       .unique();
     if (user !== null) {
-      if (user.name !== identity.name || user.imageUrl !== identity.pictureUrl?.toString()) {
-        await ctx.db.patch(user._id, { name: identity.name, imageUrl: identity.pictureUrl?.toString() ?? undefined });
+      if (user.name !== identity.name || authUser?.image?.toString() !== user.imageUrl) {
+        await ctx.db.patch(user._id, { name: identity.name, imageUrl: authUser?.image?.toString() ?? undefined });
       }
       return user._id;
     }
@@ -31,7 +29,7 @@ export const store = mutation({
       name: identity.name ?? "Anonymous",
       email: identity.email ?? "N/A",
       lastLogin: typeof identity.lastLogin === 'number' ? identity.lastLogin : Date.now(),
-      imageUrl: identity.pictureUrl?.toString() ?? undefined,
+      imageUrl: authUser?.image?.toString() ?? undefined,
     });
   },
 });
@@ -45,5 +43,75 @@ export const getCurrentUser = query({
       .unique();
     
     return user;
+  },
+});
+
+export const getCurrentUserByAuth = query({
+  args: {},
+  returns: v.union(
+    v.object({
+      _id: v.id("users"),
+      _creationTime: v.number(),
+      name: v.string(),
+      email: v.string(),
+      lastLogin: v.number(),
+      imageUrl: v.optional(v.string()),
+      phoneNumber: v.optional(v.string()),
+      availability: v.optional(v.string()),
+      city: v.optional(v.string()),
+      status: v.optional(v.string()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) =>
+        q.eq("email", identity.email ?? "N/A"),
+      )
+      .unique();
+    
+    return user ?? null;
+  },
+});
+
+export const updateUserSettings = mutation({
+  args: {
+    phoneNumber: v.optional(v.string()),
+    availability: v.optional(v.string()),
+    city: v.optional(v.string()),
+    status: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Called updateUserSettings without authentication present");
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) =>
+        q.eq("email", identity.email ?? "N/A"),
+      )
+      .unique();
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await ctx.db.patch(user._id, {
+      phoneNumber: args.phoneNumber,
+      availability: args.availability,
+      city: args.city,
+      status: args.status,
+    });
+
+    return null;
   },
 });

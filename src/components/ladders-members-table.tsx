@@ -15,6 +15,8 @@ type LadderMemberWithDetails = {
   losses: number
   points: number
   winStreak: number
+  city?: string | undefined
+  status?: string | undefined
 }
 
 interface LadderMembersTableProps {
@@ -30,7 +32,9 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
       headerLabel: 'Name',
       renderCell: (member) => (
         <div className="font-medium text-gray-900 dark:text-white">
-          {member.userName}
+          {member.userName} {member.status && (
+            <span className="text-gray-600 dark:text-gray-400">({member.status})</span>
+          )}
         </div>
       ),
       className: 'min-w-[150px]',
@@ -44,11 +48,21 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
         </span>
       ),
       className: 'min-w-[200px]',
-      mobileVisibility: 'sm',
+      mobileVisibility: 'never',
       mobileLabel: 'Email'
     },
     {
-      headerLabel: 'Win/Loss Record',
+      headerLabel: 'City',
+      renderCell: (member) => (
+        <span className="text-gray-600 dark:text-gray-400">
+          {member.city ?? '-'}
+        </span>
+      ),
+      className: 'min-w-[150px]',
+      mobileVisibility: 'lg'
+    },
+    {
+      headerLabel: 'W/L Record',
       renderCell: (member) => (
         <>
           <span className="text-gray-600 dark:text-gray-400">{member.wins} - {member.losses}</span>

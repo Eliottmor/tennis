@@ -6,11 +6,17 @@ import { routeTree } from './routeTree.gen'
 import { ConvexQueryClient } from '@convex-dev/react-query'
 
 export function getRouter() {
-  const CONVEX_URL = import.meta.env.VITE_CONVEX_URL!;
+  // Note: On both client and server, Vite replaces import.meta.env.VITE_CONVEX_URL
+  // at build time. Avoid accessing import.meta.env dynamically to keep SSR happy.
+  const CONVEX_URL = import.meta.env.VITE_CONVEX_URL;
   if (!CONVEX_URL) {
     console.error("missing envar VITE_CONVEX_URL");
+    throw new Error("VITE_CONVEX_URL environment variable is required");
   }
-  const convex = new ConvexReactClient(CONVEX_URL)
+  const convex = new ConvexReactClient(CONVEX_URL, {
+    unsavedChangesWarning: false,
+    expectAuth: true,
+  })
   const convexQueryClient = new ConvexQueryClient(convex);
   const queryClient: QueryClient = new QueryClient({
     defaultOptions: {

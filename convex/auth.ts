@@ -21,6 +21,9 @@ export const createAuth = (
     logger: {
       disabled: optionsOnly,
     },
+    advanced: {
+      cookiePrefix: 'tennis-ladder',
+    },
     baseURL: siteUrl,
     database: authComponent.adapter(ctx),
     socialProviders: {
@@ -39,9 +42,12 @@ export const createAuth = (
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {
-    // Use safeGetAuthUser which returns undefined instead of throwing
-    const user = await authComponent.safeGetAuthUser(ctx);
-    return user ?? null;
+    const user = await authComponent.safeGetAuthUser(ctx)
+    const appUser = user ? await ctx.db.query('users').withIndex('by_email', q => q.eq('email', user.email ?? '')).unique() : null;
+    return {
+      ...user,
+      ...(appUser ?? {}),
+    };
   },
 });
 

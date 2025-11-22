@@ -126,16 +126,6 @@ export const listUserMatchesInLadder = query({
     limit: v.optional(v.number()),      // optional soft cap (e.g., 50)
   },
   returns: v.object({
-    user: v.object({
-      _id: v.id("users"),
-      _creationTime: v.number(),
-      name: v.string(),
-      email: v.string(),
-      lastLogin: v.number(),
-      imageUrl: v.optional(v.string()),
-      phoneNumber: v.optional(v.string()),
-      availability: v.optional(v.string()),
-    }),
     matches: v.array(v.object({
       _id: v.id("matches"),
       _creationTime: v.number(),
@@ -164,6 +154,8 @@ export const listUserMatchesInLadder = query({
         name: v.string(),
         email: v.string(),
         imageUrl: v.optional(v.string()),
+        city: v.optional(v.string()),
+        status: v.optional(v.string()),
       }),
     })),
   }),
@@ -224,7 +216,6 @@ export const listUserMatchesInLadder = query({
     );
 
     return {
-      user,
       matches,
     };
   },

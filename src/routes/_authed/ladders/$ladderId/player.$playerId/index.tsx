@@ -3,7 +3,7 @@ import { Heading, HeadingGreen } from '~/ui/heading'
 import { api } from 'convex/_generated/api'
 import type { Id } from 'convex/_generated/dataModel'
 import { type FunctionReturnType } from "convex/server";
-import { PhoneIcon, MailIcon, ClockIcon, TrophyIcon, CheckCircle, XCircle } from 'lucide-react'
+import { PhoneIcon, MailIcon, ClockIcon, TrophyIcon, CheckCircle, XCircle, MapPinIcon, AlertCircleIcon } from 'lucide-react'
 import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
@@ -28,6 +28,7 @@ export const Route = createFileRoute(
 
 function RouteComponent() {
   const { ladderId, playerId } = Route.useParams()
+  const { user } = Route.useRouteContext()
   const { data: matches } = useSuspenseQuery(convexQuery(api.matches.listUserMatchesInLadder, {
       ladderId: ladderId as Id<'ladders'>,
       userId: playerId as Id<'users'>,
@@ -75,25 +76,37 @@ function RouteComponent() {
       <div className="lg:flex lg:items-center lg:justify-between bg-white dark:bg-gray-800 rounded-lg p-6">
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl/7 font-bold text-gray-900 dark:text-white sm:truncate sm:text-3xl sm:tracking-tight">
-            {matches?.user.name}
+            {user?.name}
           </h2>
           <div className="mt-1 flex flex-col sm:mt-0 sm:flex-row sm:flex-wrap sm:space-x-6">
-            {matches?.user.email && (
+            {user?.email && (
               <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <MailIcon aria-hidden="true" className="mr-1.5 size-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                <span className="break-all">{matches.user.email}</span>
+                <span className="break-all">{user.email}</span>
               </div>
             )}
-            {matches?.user.phoneNumber && (
+            {user?.phoneNumber && (
               <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <PhoneIcon aria-hidden="true" className="mr-1.5 size-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                {matches.user.phoneNumber}
+                {user.phoneNumber}
               </div>
             )}
-            {matches?.user.availability && (
+            {user?.availability && (
               <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <ClockIcon aria-hidden="true" className="mr-1.5 size-5 shrink-0 text-gray-400 dark:text-gray-500" />
-                {matches.user.availability}
+                {user.availability}
+              </div>
+            )}
+            {user?.city && (
+              <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <MapPinIcon aria-hidden="true" className="mr-1.5 size-5 shrink-0 text-gray-400 dark:text-gray-500" />
+                {user.city}
+              </div>
+            )}
+            {user?.status && (
+              <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <AlertCircleIcon aria-hidden="true" className="mr-1.5 size-5 shrink-0 text-gray-400 dark:text-gray-500" />
+                {user.status}
               </div>
             )}
           </div>

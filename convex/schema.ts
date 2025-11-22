@@ -13,6 +13,8 @@ export default defineSchema({
     imageUrl: v.optional(v.string()),
     phoneNumber: v.optional(v.string()),
     availability: v.optional(v.string()),
+    city: v.optional(v.string()),
+    status: v.optional(v.string()),
   }).index("by_email", ["email"]),
   
   ladders: defineTable({
