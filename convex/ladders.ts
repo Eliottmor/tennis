@@ -453,6 +453,50 @@ export const isUserMemberOfLadder = query({
   },
 });
 
+/**
+ * Get ladder member data for a specific user in a ladder
+ */
+export const getLadderMember = query({
+  args: {
+    ladderId: v.id("ladders"),
+    userId: v.id("users"),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id("ladder_members"),
+      userId: v.id("users"),
+      ladderId: v.id("ladders"),
+      joinedAt: v.number(),
+      ladderPoints: v.number(),
+      winStreak: v.number(),
+      lastMatchAt: v.optional(v.number()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const membership = await ctx.db
+      .query("ladder_members")
+      .withIndex("by_ladder_and_user", (q) =>
+        q.eq("ladderId", args.ladderId).eq("userId", args.userId)
+      )
+      .unique();
+
+    if (!membership) {
+      return null;
+    }
+
+    return {
+      _id: membership._id,
+      userId: membership.userId,
+      ladderId: membership.ladderId,
+      joinedAt: membership.joinedAt,
+      ladderPoints: membership.ladderPoints,
+      winStreak: membership.winStreak,
+      lastMatchAt: membership.lastMatchAt,
+    };
+  },
+});
+
 // ===== CRON JOB HELPER FUNCTIONS =====
 
 /**

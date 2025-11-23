@@ -8,6 +8,7 @@ import { convexQuery } from '@convex-dev/react-query'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import clsx from 'clsx'
 import { formatDate } from '~/utils/date'
+import { STRAIGHT_SETS_BONUS, WIN_STREAK_BONUS, BAGEL_SET_BONUS } from '~/utils/points'
 
 type Result = FunctionReturnType<typeof api.matches.listUserMatchesInLadder>;
 
@@ -16,12 +17,20 @@ export const Route = createFileRoute(
 )({
   loader: async ({ context, params }) => {
     const { ladderId, playerId } = params
-    await context.queryClient.ensureQueryData(
-      convexQuery(api.matches.listUserMatchesInLadder, {
-        ladderId: ladderId as Id<'ladders'>,
-        userId: playerId as Id<'users'>,
-      })
-    )
+    await Promise.all([
+      context.queryClient.ensureQueryData(
+        convexQuery(api.matches.listUserMatchesInLadder, {
+          ladderId: ladderId as Id<'ladders'>,
+          userId: playerId as Id<'users'>,
+        })
+      ),
+      context.queryClient.ensureQueryData(
+        convexQuery(api.ladders.getLadderMember, {
+          ladderId: ladderId as Id<'ladders'>,
+          userId: playerId as Id<'users'>,
+        })
+      ),
+    ])
   },
   component: RouteComponent,
 })
@@ -30,6 +39,11 @@ function RouteComponent() {
   const { ladderId, playerId } = Route.useParams()
   const { user } = Route.useRouteContext()
   const { data: matches } = useSuspenseQuery(convexQuery(api.matches.listUserMatchesInLadder, {
+      ladderId: ladderId as Id<'ladders'>,
+      userId: playerId as Id<'users'>,
+    })
+  )
+  const { data: ladderMember } = useSuspenseQuery(convexQuery(api.ladders.getLadderMember, {
       ladderId: ladderId as Id<'ladders'>,
       userId: playerId as Id<'users'>,
     })
@@ -57,17 +71,54 @@ function RouteComponent() {
     }).join(', ')
   }
 
+  // Helper function to calculate bonus points breakdown
+  const getBonusPointsBreakdown = (match: Result['matches'][number]) => {
+    if (match.winnerId !== playerId) {
+      return null // Only show breakdown for wins
+    }
+
+    const bonuses: Array<{ points: number; emoji: string; reason: string }> = []
+    
+    if (match.straightSets) {
+      bonuses.push({
+        points: STRAIGHT_SETS_BONUS,
+        emoji: '💯',
+        reason: 'straight sets'
+      })
+    }
+    
+    if (match.winStreakBonus) {
+      bonuses.push({
+        points: WIN_STREAK_BONUS,
+        emoji: '🔥',
+        reason: 'win streak'
+      })
+    }
+    
+    if (match.bagelSetsWonByWinner && match.bagelSetsWonByWinner > 0) {
+      bonuses.push({
+        points: match.bagelSetsWonByWinner * BAGEL_SET_BONUS,
+        emoji: '🥯',
+        reason: `${match.bagelSetsWonByWinner} bagel set${match.bagelSetsWonByWinner > 1 ? 's' : ''}`
+      })
+    }
+
+    return bonuses.length > 0 ? bonuses : null
+  }
+
   // Calculate stats
   const totalMatches = matches?.matches.length || 0
   const wins = matches?.matches.filter(match => match.winnerId === playerId).length || 0
   const losses = totalMatches - wins
   const winRate = totalMatches > 0 ? Math.round((wins / totalMatches) * 100) : 0
+  const currentWinStreak = ladderMember?.winStreak ?? 0
 
   const stats = [
     { name: 'Total Matches', value: totalMatches },
     { name: 'Wins', value: wins },
     { name: 'Losses', value: losses },
     { name: 'Win Rate', value: `${winRate}%` },
+    { name: 'Current Win Streak', value: currentWinStreak },
   ]
 
   return (
@@ -114,7 +165,7 @@ function RouteComponent() {
       </div>
 
       {/* Stats */}
-      <dl className="mx-auto grid max-w-7xl grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 lg:px-2 xl:px-0">
+      <dl className="mx-auto grid max-w-7xl grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 lg:px-2 xl:px-0">
         {stats.map((stat) => (
           <div
             key={stat.name}
@@ -193,6 +244,32 @@ function RouteComponent() {
                                 </span>
                               )}
                             </p>
+                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                              {isWin ? (
+                                <>
+                                  {(() => {
+                                    const breakdown = getBonusPointsBreakdown(match)
+                                    if (breakdown) {
+                                      return (
+                                        <>
+                                          {breakdown.map((bonus, idx) => (
+                                            <p key={idx} className="text-xs text-gray-400 dark:text-gray-500">
+                                              +{bonus.points}{bonus.emoji ? ` ${bonus.emoji}` : ''} - {bonus.reason}
+                                            </p>
+                                          ))}
+                                        </>
+                                      )
+                                    }
+                                    return null
+                                  })()}
+                                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mt-0.5">
+                                    +{match.winnerPointsAwarded ?? 0} points total
+                                  </p>
+                                </>
+                              ) : (
+                                <p>+{match.loserPointsAwarded ?? 0} points</p>
+                              )}
+                            </div>
                           </div>
                           <div className="text-right text-sm whitespace-nowrap text-gray-500 dark:text-gray-400">
                             <time dateTime={dateTime}>{dateShort}</time>

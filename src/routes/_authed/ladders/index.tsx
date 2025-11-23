@@ -20,7 +20,13 @@ export const Route = createFileRoute('/_authed/ladders/')({
 
 function RouteComponent() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [showPastLadders, setShowPastLadders] = useState(false)
   const { data: ladders } = useSuspenseQuery(convexQuery(api.ladders.getAllLadders, {}))
+
+  // Filter ladders into active and past groups based on endDate
+  const now = Date.now()
+  const activeLadders = (ladders || []).filter(ladder => ladder.endDate >= now)
+  const pastLadders = (ladders || []).filter(ladder => ladder.endDate < now)
 
   return (
     <div>
@@ -37,7 +43,34 @@ function RouteComponent() {
         </Button>
       </div>
 
-      <LaddersTable ladders={ladders || []} isPending={false} />
+      <LaddersTable ladders={activeLadders} isPending={false} />
+
+      {pastLadders.length > 0 && (
+        <div className="mt-8">
+          {!showPastLadders ? (
+            <Button
+              outline
+              onClick={() => setShowPastLadders(true)}
+              className="w-full sm:w-auto"
+            >
+              View Past Ladders ({pastLadders.length})
+            </Button>
+          ) : (
+            <div>
+              <div className="mb-6 flex items-center justify-between">
+                <Heading level={2}>Past Ladders</Heading>
+                <Button
+                  outline
+                  onClick={() => setShowPastLadders(false)}
+                >
+                  Hide Past Ladders
+                </Button>
+              </div>
+              <LaddersTable ladders={pastLadders} isPending={false} />
+            </div>
+          )}
+        </div>
+      )}
 
       <CreateLadderDialog isDialogOpen={isDialogOpen} setIsDialogOpen={setIsDialogOpen} />
     </div>

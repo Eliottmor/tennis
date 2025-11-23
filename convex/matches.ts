@@ -1,6 +1,7 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
+import { BASE_WINNER_POINTS, BASE_LOSER_POINTS, STRAIGHT_SETS_BONUS, WIN_STREAK_BONUS, BAGEL_SET_BONUS } from "../src/utils/points";
 
 export const reportMatch = mutation({
   args: {
@@ -30,14 +31,14 @@ export const reportMatch = mutation({
     await Promise.all([checkMember(args.winnerId), checkMember(args.loserId)]);
 
     const now = Date.now();
-    let winnerPointsAwarded = 50;
-    let loserPointsAwarded = 20;
+    let winnerPointsAwarded = BASE_WINNER_POINTS;
+    let loserPointsAwarded = BASE_LOSER_POINTS;
     let straightSets = false;
     let winStreakBonus = false;
     let bagelSetsWonByWinner = 0;
 
     if (args.sets.length === 2 && args.sets[0].winnerGames > args.sets[0].loserGames && args.sets[1].winnerGames > args.sets[1].loserGames) {
-      winnerPointsAwarded += 5;
+      winnerPointsAwarded += STRAIGHT_SETS_BONUS;
       straightSets = true;
     }
 
@@ -52,13 +53,18 @@ export const reportMatch = mutation({
     // Check for 3-match win streak by looking at current winStreak
     if (winnerMember && winnerMember.winStreak === 2) {
       winStreakBonus = true;
-      winnerPointsAwarded += 3; // Bonus points for 3-match win streak
+      winnerPointsAwarded += WIN_STREAK_BONUS;
     }
 
     for (const s of args.sets) {
       if (s.winnerGames === 6 && s.loserGames === 0) {
         bagelSetsWonByWinner += 1;
       }
+    }
+
+    // Add bonus points for bagel sets
+    if (bagelSetsWonByWinner > 0) {
+      winnerPointsAwarded += bagelSetsWonByWinner * BAGEL_SET_BONUS;
     }
 
     const matchId = await ctx.db.insert("matches", {

@@ -20,6 +20,11 @@ export function Avatar({
   className,
   ...props
 }: AvatarProps & React.ComponentPropsWithoutRef<'span'>) {
+  const [imageError, setImageError] = React.useState(false)
+  
+  const showImage = src && !imageError
+  const showInitials = (!src || imageError) && initials
+
   return (
     <span
       data-slot="avatar"
@@ -33,7 +38,7 @@ export function Avatar({
         square ? 'rounded-(--avatar-radius) *:rounded-(--avatar-radius)' : 'rounded-full *:rounded-full'
       )}
     >
-      {initials && (
+      {showInitials && (
         <svg
           className="size-full fill-current p-[5%] text-[48px] font-medium uppercase select-none"
           viewBox="0 0 100 100"
@@ -45,7 +50,15 @@ export function Avatar({
           </text>
         </svg>
       )}
-      {src && <img className="size-full" src={src} alt={alt} />}
+      {showImage && (
+        <img 
+          className="size-full object-cover object-center" 
+          src={src} 
+          alt={alt}
+          onError={() => setImageError(true)}
+          loading="lazy"
+        />
+      )}
     </span>
   )
 }

@@ -3,6 +3,7 @@ import { SidebarLayout } from '../ui/sidebar-layout'
 import { Sidebar, SidebarBody, SidebarFooter, SidebarHeader, SidebarItem, SidebarLabel, SidebarSection } from '~/ui/sidebar'
 import { Dropdown, DropdownButton, DropdownDivider, DropdownItem, DropdownLabel, DropdownMenu } from '~/ui/dropdown'
 import { Avatar } from '~/ui/avatar'
+import { getInitials } from '~/utils/user'
 import {
   ArrowRightStartOnRectangleIcon,
   ChevronUpIcon,
@@ -98,7 +99,13 @@ function AuthedLayout() {
               <div>
                 <DropdownButton as={SidebarItem}>
                   <span className="flex min-w-0 items-center gap-3">
-                    <Avatar src={user.image || undefined} className="size-10" square alt="" />
+                    <Avatar 
+                      src={user.imageUrl || user.image || undefined} 
+                      initials={getInitials(user?.name || '')}
+                      className="size-10" 
+                      square 
+                      alt="" 
+                    />
                     <span className="min-w-0">
                       <span className="block truncate text-sm/5 font-medium text-zinc-950 dark:text-white">{user?.name || 'User'}</span>
                       <span className="block truncate text-xs/5 font-normal text-zinc-500 dark:text-zinc-400">
