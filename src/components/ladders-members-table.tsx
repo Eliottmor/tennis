@@ -4,6 +4,7 @@ import type { Id } from 'convex/_generated/dataModel'
 import { useRouter } from '@tanstack/react-router'
 import { useQuery } from '@tanstack/react-query'
 import { convexQuery } from '@convex-dev/react-query'
+import clsx from 'clsx'
 
 type LadderMemberWithDetails = {
   _id: Id<"ladder_members">
@@ -21,22 +22,54 @@ type LadderMemberWithDetails = {
 
 interface LadderMembersTableProps {
   ladderId: Id<"ladders">;
+  currentUserId: string;
 }
 
 
-export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
+export function LadderMembersTable({ ladderId, currentUserId }: LadderMembersTableProps) {
   const { data: members } = useQuery(convexQuery(api.ladders.getLadderMembers, { ladderId }))
   const router = useRouter()
+  
+  // Sort members by points (descending), then by wins (descending) as tiebreaker
+  const sortedMembers = members 
+    ? [...members].sort((a, b) => {
+        // First sort by points (descending)
+        if (b.points !== a.points) {
+          return b.points - a.points
+        }
+        // If points are equal, sort by wins (descending)
+        return b.wins - a.wins
+      })
+    : []
+  
   const cells: TableCell<LadderMemberWithDetails>[] = [
     {
       headerLabel: 'Name',
-      renderCell: (member) => (
-        <div className="font-medium text-gray-900 dark:text-white">
-          {member.userName} {member.status && (
-            <span className="text-gray-600 dark:text-gray-400">({member.status})</span>
-          )}
-        </div>
-      ),
+      renderCell: (member) => {
+        const isCurrentUser = currentUserId === member.userId
+        return (
+          <div className={clsx(
+            "font-medium wrap-break-word",
+            isCurrentUser 
+              ? "text-green-600 dark:text-green-400" 
+              : "text-gray-900 dark:text-white"
+          )}>
+            <div className="flex items-center gap-2">
+              <span>{member.userName}</span>
+            </div>
+            {member.status && (
+              <div className={clsx(
+                "text-sm mt-0.5",
+                isCurrentUser 
+                  ? "text-green-500 dark:text-green-500" 
+                  : "text-gray-600 dark:text-gray-400"
+              )}>
+                ({member.status})
+              </div>
+            )}
+          </div>
+        )
+      },
       className: 'min-w-[150px]',
       mobileVisibility: 'always'
     },
@@ -55,7 +88,7 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
       headerLabel: 'City',
       renderCell: (member) => (
         <span className="text-gray-600 dark:text-gray-400">
-          {member.city ?? '-'}
+          {member.city ?? ''}
         </span>
       ),
       className: 'min-w-[150px]',
@@ -91,7 +124,7 @@ export function LadderMembersTable({ ladderId }: LadderMembersTableProps) {
       </div>
       <Table
         cells={cells}
-        rows={members || []}
+        rows={sortedMembers}
         isLoading={!members}
         skeletonRowCount={5}
         isContentHeight

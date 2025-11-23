@@ -168,7 +168,7 @@ function LadderDetails() {
           </div>
         </div>
 
-      <LadderMembersTable ladderId={ladderId as Id<"ladders">} />
+      <LadderMembersTable ladderId={ladderId as Id<"ladders">} currentUserId={userId ?? ''} />
 
       <LadderPasswordAlert
         ladderId={ladderId as Id<"ladders">}

@@ -351,7 +351,7 @@ export function ComposableTableHeader({
       className={clsx(
         className,
         visibilityClass,
-        'sticky top-0 z-1 bg-white shadow-sm',
+        'sticky top-0 z-1 bg-white',
         'bg-white/95 backdrop-blur supports-backdrop-filter:bg-white/75 dark:bg-zinc-950/95 dark:supports-backdrop-filter:bg-zinc-950/75',
         'py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-white',
         isFirstHeader ? 'pr-3 pl-4 sm:pl-0' : 'px-3',

@@ -428,6 +428,74 @@ export const getUserLadders = query({
 });
 
 /**
+ * Get all active ladders a user is enrolled in with their position
+ */
+export const getUserActiveLaddersWithPositions = query({
+  args: {
+    userId: v.id("users"),
+  },
+  returns: v.array(v.object({
+    _id: v.id("ladders"),
+    name: v.string(),
+    startDate: v.number(),
+    endDate: v.number(),
+    createdBy: v.id("users"),
+    isActive: v.boolean(),
+    joinedAt: v.number(),
+    position: v.number(),
+  })),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const memberships = await ctx.db
+      .query("ladder_members")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+
+    // Get ladder details for each membership and filter for active ladders
+    const userLaddersWithPositions = await Promise.all(
+      memberships.map(async (membership) => {
+        const ladder = await ctx.db.get(membership.ladderId);
+        if (!ladder) {
+          throw new Error("Ladder not found");
+        }
+
+        // Filter for active ladders (isActive === true and endDate hasn't passed)
+        if (!ladder.isActive || now > ladder.endDate) {
+          return null;
+        }
+
+        // Get all members of this ladder
+        const allMembers = await ctx.db
+          .query("ladder_members")
+          .withIndex("by_ladder", (q) => q.eq("ladderId", ladder._id))
+          .collect();
+
+        // Sort members by ladderPoints (descending)
+        const sortedMembers = [...allMembers].sort((a, b) => b.ladderPoints - a.ladderPoints);
+
+        // Find user's position (1-indexed)
+        const userIndex = sortedMembers.findIndex(m => m.userId === args.userId);
+        const position = userIndex >= 0 ? userIndex + 1 : 0;
+
+        return {
+          _id: ladder._id,
+          name: ladder.name,
+          startDate: ladder.startDate,
+          endDate: ladder.endDate,
+          createdBy: ladder.createdBy,
+          isActive: ladder.isActive,
+          joinedAt: membership.joinedAt,
+          position,
+        };
+      })
+    );
+
+    // Filter out null values (inactive ladders)
+    return userLaddersWithPositions.filter((ladder): ladder is NonNullable<typeof ladder> => ladder !== null);
+  },
+});
+
+/**
  * Check if a user is a member of a specific ladder
  */
 export const isUserMemberOfLadder = query({

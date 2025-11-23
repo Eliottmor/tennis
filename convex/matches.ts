@@ -446,3 +446,134 @@ export const getOpponentsInLadder = query({
   },
 });
 
+/**
+ * Get recent matches for the current user across all ladders (newest first),
+ * with sets attached, opponent info, and ladder info.
+ */
+export const listRecentMatches = query({
+  args: {
+    limit: v.optional(v.number()),
+  },
+  returns: v.object({
+    matches: v.array(v.object({
+      _id: v.id("matches"),
+      _creationTime: v.number(),
+      ladderId: v.id("ladders"),
+      matchDate: v.number(),
+      winnerId: v.id("users"),
+      loserId: v.id("users"),
+      createdAt: v.number(),
+      winnerPointsAwarded: v.optional(v.number()),
+      loserPointsAwarded: v.optional(v.number()),
+      winStreakBonus: v.optional(v.boolean()),
+      straightSets: v.optional(v.boolean()),
+      bagelSetsWonByWinner: v.optional(v.number()),
+      sets: v.array(v.object({
+        _id: v.id("match_sets"),
+        _creationTime: v.number(),
+        matchId: v.id("matches"),
+        setNumber: v.number(),
+        winnerGames: v.number(),
+        loserGames: v.number(),
+        winnerTiebreak: v.optional(v.number()),
+        loserTiebreak: v.optional(v.number()),
+      })),
+      opponent: v.object({
+        _id: v.id("users"),
+        name: v.string(),
+        email: v.string(),
+        imageUrl: v.optional(v.string()),
+        city: v.optional(v.string()),
+        status: v.optional(v.string()),
+      }),
+      ladder: v.object({
+        _id: v.id("ladders"),
+        name: v.string(),
+      }),
+    })),
+  }),
+  handler: async (ctx, { limit = 5 }) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+
+    // Get current user from database
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_email", (q) =>
+        q.eq("email", identity.email ?? "N/A"),
+      )
+      .unique();
+
+    if (!user) {
+      return { matches: [] };
+    }
+
+    const userId = user._id;
+
+    // Matches where user is winner
+    const won = await ctx.db
+      .query("matches")
+      .withIndex("by_winner", (q) => q.eq("winnerId", userId))
+      .collect();
+
+    // Matches where user is loser
+    const lost = await ctx.db
+      .query("matches")
+      .withIndex("by_loser", (q) => q.eq("loserId", userId))
+      .collect();
+
+    // Combine and sort by matchDate descending
+    const combined = [...won, ...lost]
+      .sort((a, b) => b.matchDate - a.matchDate)
+      .slice(0, limit);
+
+    // Attach sets, opponent info, and ladder info for each match
+    const matches = await Promise.all(
+      combined.map(async (m) => {
+        const sets = await ctx.db
+          .query("match_sets")
+          .withIndex("by_match", (q) => q.eq("matchId", m._id))
+          .collect();
+        // sort sets by setNumber just in case
+        sets.sort((a, b) => a.setNumber - b.setNumber);
+        
+        // Get opponent info
+        const opponentId = m.winnerId === userId ? m.loserId : m.winnerId;
+        const opponent = await ctx.db.get(opponentId);
+        if (!opponent) {
+          throw new Error("Opponent not found");
+        }
+        
+        // Get ladder info
+        const ladder = await ctx.db.get(m.ladderId);
+        if (!ladder) {
+          throw new Error("Ladder not found");
+        }
+        
+        return { 
+          ...m,
+          sets,
+          opponent: {
+            _id: opponent._id,
+            name: opponent.name,
+            email: opponent.email,
+            imageUrl: opponent.imageUrl,
+            city: opponent.city,
+            status: opponent.status,
+          },
+          ladder: {
+            _id: ladder._id,
+            name: ladder.name,
+          },
+        };
+      })
+    );
+
+    return {
+      matches,
+    };
+  },
+});
+

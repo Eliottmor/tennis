@@ -1,3 +1,9 @@
+import type { Id } from "convex/_generated/dataModel";
+import { api } from "convex/_generated/api";
+import type { FunctionReturnType } from "convex/server";
+import { BAGEL_SET_BONUS, STRAIGHT_SETS_BONUS, WIN_STREAK_BONUS } from "./points";
+
+type RecentMatchesResult = FunctionReturnType<typeof api.matches.listRecentMatches>
 export interface PlayerScores {
   set1?: number;
   set2?: number;
@@ -104,4 +110,61 @@ export function getSetScores(winner: 'playerOne' | 'playerTwo', playerOne: Playe
   }
 
   return sets;
+}
+
+
+export const formatScore = (match: RecentMatchesResult['matches'][number], userId: Id<'users'>) => {
+  if (match.sets.length === 0) {
+    return null
+  }
+  
+  return match.sets.map((set) => {
+    const playerGames = match.winnerId === userId ? set.winnerGames : set.loserGames
+    const opponentGames = match.winnerId === userId ? set.loserGames : set.winnerGames
+    
+    // Tiebreak is shown for the set winner (match winner's tiebreak)
+    const tiebreak = match.winnerId === userId ? set.winnerTiebreak : set.loserTiebreak
+    
+    let score = `${playerGames}-${opponentGames}`
+    if (tiebreak) {
+      score += `(${tiebreak})`
+    }
+    
+    return score
+  }).join(', ')
+}
+
+  // Helper function to calculate bonus points breakdown
+export const getBonusPointsBreakdown = (match: RecentMatchesResult['matches'][number], userId: Id<'users'>) => {
+  if (match.winnerId !== userId) {
+    return null // Only show breakdown for wins
+  }
+
+  const bonuses: Array<{ points: number; emoji: string; reason: string }> = []
+  
+  if (match.straightSets) {
+    bonuses.push({
+      points: STRAIGHT_SETS_BONUS,
+      emoji: '💯',
+      reason: 'straight sets'
+    })
+  }
+  
+  if (match.winStreakBonus) {
+    bonuses.push({
+      points: WIN_STREAK_BONUS,
+      emoji: '🔥',
+      reason: 'win streak'
+    })
+  }
+  
+  if (match.bagelSetsWonByWinner && match.bagelSetsWonByWinner > 0) {
+    bonuses.push({
+      points: match.bagelSetsWonByWinner * BAGEL_SET_BONUS,
+      emoji: '🥯',
+      reason: `${match.bagelSetsWonByWinner} bagel set${match.bagelSetsWonByWinner > 1 ? 's' : ''}`
+    })
+  }
+
+  return bonuses.length > 0 ? bonuses : null
 }
