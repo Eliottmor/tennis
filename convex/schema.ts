@@ -35,6 +35,7 @@ export default defineSchema({
     ladderPoints: v.number(),
     winStreak: v.number(),
     lastMatchAt: v.optional(v.number()),
+    eloRating: v.number(),
   })
     .index("by_ladder", ["ladderId"])
     .index("by_user", ["userId"])
@@ -52,7 +53,12 @@ export default defineSchema({
 
     winStreakBonus: v.optional(v.boolean()),
     straightSets: v.boolean(),
-    bagelSetsWonByWinner: v.number()
+    bagelSetsWonByWinner: v.number(),
+
+    winnerEloBefore: v.optional(v.number()),
+    loserEloBefore: v.optional(v.number()),
+    winnerEloAfter: v.optional(v.number()),
+    loserEloAfter: v.optional(v.number()),
   })
     .index("by_ladder", ["ladderId"])
     .index("by_winner", ["winnerId"])

@@ -1,7 +1,18 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Id } from "./_generated/dataModel";
-import { BASE_WINNER_POINTS, BASE_LOSER_POINTS, STRAIGHT_SETS_BONUS, WIN_STREAK_BONUS, BAGEL_SET_BONUS } from "../src/utils/points";
+import {
+  BASE_WINNER_POINTS,
+  BASE_LOSER_POINTS,
+  STRAIGHT_SETS_BONUS,
+  WIN_STREAK_BONUS,
+  BAGEL_SET_BONUS,
+  ELO_K,
+  MAX_UPSET_BONUS,
+  MAX_FAVORITE_PENALTY,
+  MAX_UNDERDOG_LOSS_BONUS,
+  INITIAL_ELO,
+} from "../src/utils/points";
 
 export const reportMatch = mutation({
   args: {
@@ -27,8 +38,12 @@ export const reportMatch = mutation({
         )
         .unique();
       if (!m) throw new Error("Both players must be ladder members");
+      return m;
     };
-    await Promise.all([checkMember(args.winnerId), checkMember(args.loserId)]);
+    const [winnerMember, loserMember] = await Promise.all([
+      checkMember(args.winnerId),
+      checkMember(args.loserId),
+    ]);
 
     const now = Date.now();
     let winnerPointsAwarded = BASE_WINNER_POINTS;
@@ -41,15 +56,6 @@ export const reportMatch = mutation({
       winnerPointsAwarded += STRAIGHT_SETS_BONUS;
       straightSets = true;
     }
-
-    // Get winner's current ladder member data for win streak check
-    const winnerMember = await ctx.db
-      .query("ladder_members")
-      .withIndex("by_ladder_and_user", (q) =>
-        q.eq("ladderId", args.ladderId).eq("userId", args.winnerId)
-      )
-      .unique();
-
     // Check for 3-match win streak by looking at current winStreak
     if (winnerMember && winnerMember.winStreak === 2) {
       winStreakBonus = true;
@@ -67,6 +73,19 @@ export const reportMatch = mutation({
       winnerPointsAwarded += bagelSetsWonByWinner * BAGEL_SET_BONUS;
     }
 
+    const winnerEloBefore = winnerMember?.eloRating ?? INITIAL_ELO;
+    const loserEloBefore  = loserMember?.eloRating ?? INITIAL_ELO;
+
+    const {
+      winnerEloAfter,
+      loserEloAfter,
+      winnerLadderBonus,
+      loserLadderBonus,
+    } = computeEloAndLadderBonus(winnerEloBefore, loserEloBefore);
+
+    winnerPointsAwarded += winnerLadderBonus;
+    loserPointsAwarded  += loserLadderBonus;
+
     const matchId = await ctx.db.insert("matches", {
       ladderId: args.ladderId,
       matchDate: args.matchDate,
@@ -78,6 +97,10 @@ export const reportMatch = mutation({
       straightSets: straightSets,
       winStreakBonus: winStreakBonus,
       bagelSetsWonByWinner: bagelSetsWonByWinner,
+      winnerEloBefore: winnerEloBefore,
+      loserEloBefore: loserEloBefore,
+      winnerEloAfter: winnerEloAfter,
+      loserEloAfter: loserEloAfter,
     });
 
     for (const s of args.sets) {
@@ -98,22 +121,16 @@ export const reportMatch = mutation({
         winStreak: winnerMember.winStreak + 1,
         lastMatchAt: args.matchDate,
         ladderPoints: winnerMember.ladderPoints + winnerPointsAwarded,
+        eloRating: winnerEloAfter,
       });
     }
-
-    // Loser's streak resets to 0
-    const loserMember = await ctx.db
-      .query("ladder_members")
-      .withIndex("by_ladder_and_user", (q) =>
-        q.eq("ladderId", args.ladderId).eq("userId", args.loserId)
-      )
-      .unique();
 
     if (loserMember) {
       await ctx.db.patch(loserMember._id, {
         winStreak: 0,
         lastMatchAt: args.matchDate,
         ladderPoints: loserMember.ladderPoints + loserPointsAwarded,
+        eloRating: loserEloAfter,
       });
     }
 
@@ -577,3 +594,37 @@ export const listRecentMatches = query({
   },
 });
 
+function computeEloAndLadderBonus(winnerElo: number, loserElo: number) {
+  const expectedWinner =
+    1 / (1 + Math.pow(10, (loserElo - winnerElo) / 400));
+  const expectedLoser = 1 - expectedWinner;
+
+  // Standard Elo update
+  const winnerEloAfter = winnerElo + ELO_K * (1 - expectedWinner);
+  const loserEloAfter = loserElo + ELO_K * (0 - expectedLoser);
+
+  // Upset bonus: only if winner was an underdog (expectedWinner < 0.5)
+  const upsetFactor = Math.max(0, 0.5 - expectedWinner) / 0.5; // 0..1
+  const winnerUpsetBonus = Math.round(upsetFactor * MAX_UPSET_BONUS);
+
+  // Favorite penalty: only if winner was a favorite (expectedWinner > 0.5)
+  const favoriteFactor = Math.max(0, expectedWinner - 0.5) / 0.5; // 0..1
+  const winnerPenalty = Math.round(favoriteFactor * MAX_FAVORITE_PENALTY);
+
+  const winnerLadderBonus = winnerUpsetBonus - winnerPenalty;
+
+  // Underdog loss bonus: reward playing up
+  const underdogLossFactor = Math.max(0, 0.5 - expectedLoser) / 0.5; // 0..1
+  const loserLadderBonus = Math.round(
+    underdogLossFactor * MAX_UNDERDOG_LOSS_BONUS
+  );
+
+  return {
+    winnerEloBefore: winnerElo,
+    loserEloBefore: loserElo,
+    winnerEloAfter,
+    loserEloAfter,
+    winnerLadderBonus,
+    loserLadderBonus,
+  };
+}

@@ -16,6 +16,7 @@ import { Route as AuthedSettingsRouteImport } from './routes/_authed/settings'
 import { Route as AuthedDashboardRouteImport } from './routes/_authed/dashboard'
 import { Route as AuthedLaddersIndexRouteImport } from './routes/_authed/ladders/index'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as AuthedLaddersRulesRouteImport } from './routes/_authed/ladders/rules'
 import { Route as AuthedLaddersLadderIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/index'
 import { Route as AuthedLaddersLadderIdPlayerPlayerIdIndexRouteImport } from './routes/_authed/ladders/$ladderId/player.$playerId/index'
 
@@ -53,6 +54,11 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthedLaddersRulesRoute = AuthedLaddersRulesRouteImport.update({
+  id: '/ladders/rules',
+  path: '/ladders/rules',
+  getParentRoute: () => AuthedRoute,
+} as any)
 const AuthedLaddersLadderIdIndexRoute =
   AuthedLaddersLadderIdIndexRouteImport.update({
     id: '/ladders/$ladderId/',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/settings': typeof AuthedSettingsRoute
+  '/ladders/rules': typeof AuthedLaddersRulesRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/ladders': typeof AuthedLaddersIndexRoute
   '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
@@ -81,6 +88,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/dashboard': typeof AuthedDashboardRoute
   '/settings': typeof AuthedSettingsRoute
+  '/ladders/rules': typeof AuthedLaddersRulesRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/ladders': typeof AuthedLaddersIndexRoute
   '/ladders/$ladderId': typeof AuthedLaddersLadderIdIndexRoute
@@ -93,6 +101,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/_authed/dashboard': typeof AuthedDashboardRoute
   '/_authed/settings': typeof AuthedSettingsRoute
+  '/_authed/ladders/rules': typeof AuthedLaddersRulesRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/_authed/ladders/': typeof AuthedLaddersIndexRoute
   '/_authed/ladders/$ladderId/': typeof AuthedLaddersLadderIdIndexRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/settings'
+    | '/ladders/rules'
     | '/api/auth/$'
     | '/ladders'
     | '/ladders/$ladderId'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/dashboard'
     | '/settings'
+    | '/ladders/rules'
     | '/api/auth/$'
     | '/ladders'
     | '/ladders/$ladderId'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/_authed/dashboard'
     | '/_authed/settings'
+    | '/_authed/ladders/rules'
     | '/api/auth/$'
     | '/_authed/ladders/'
     | '/_authed/ladders/$ladderId/'
@@ -190,6 +202,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authed/ladders/rules': {
+      id: '/_authed/ladders/rules'
+      path: '/ladders/rules'
+      fullPath: '/ladders/rules'
+      preLoaderRoute: typeof AuthedLaddersRulesRouteImport
+      parentRoute: typeof AuthedRoute
+    }
     '/_authed/ladders/$ladderId/': {
       id: '/_authed/ladders/$ladderId/'
       path: '/ladders/$ladderId'
@@ -210,6 +229,7 @@ declare module '@tanstack/react-router' {
 interface AuthedRouteChildren {
   AuthedDashboardRoute: typeof AuthedDashboardRoute
   AuthedSettingsRoute: typeof AuthedSettingsRoute
+  AuthedLaddersRulesRoute: typeof AuthedLaddersRulesRoute
   AuthedLaddersIndexRoute: typeof AuthedLaddersIndexRoute
   AuthedLaddersLadderIdIndexRoute: typeof AuthedLaddersLadderIdIndexRoute
   AuthedLaddersLadderIdPlayerPlayerIdIndexRoute: typeof AuthedLaddersLadderIdPlayerPlayerIdIndexRoute
@@ -218,6 +238,7 @@ interface AuthedRouteChildren {
 const AuthedRouteChildren: AuthedRouteChildren = {
   AuthedDashboardRoute: AuthedDashboardRoute,
   AuthedSettingsRoute: AuthedSettingsRoute,
+  AuthedLaddersRulesRoute: AuthedLaddersRulesRoute,
   AuthedLaddersIndexRoute: AuthedLaddersIndexRoute,
   AuthedLaddersLadderIdIndexRoute: AuthedLaddersLadderIdIndexRoute,
   AuthedLaddersLadderIdPlayerPlayerIdIndexRoute:

@@ -50,6 +50,7 @@ export const createLadder = mutation({
         joinedAt: Date.now(),
         ladderPoints: 0,
         winStreak: 0,
+        eloRating: 1500,
       });
     }
     
@@ -119,6 +120,7 @@ export const addUserToLadder = mutation({
       joinedAt: Date.now(),
       ladderPoints: 0,
       winStreak: 0,
+      eloRating: 1500,
     });
 
     return {
