@@ -45,7 +45,7 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
     {
       headerLabel: 'Name',
       renderCell: (ladder) => (
-        <Text className="text-gray-900 dark:text-white">
+        <Text className="text-gray-900 dark:text-white wrap-break-words whitespace-normal">
           {ladder.name}
           {ladder.hasPassword && (
             <svg 
@@ -62,7 +62,7 @@ export function LaddersTable({ ladders, isPending }: { ladders: Ladder[], isPend
           )}
         </Text>
       ),
-      className: 'min-w-[200px]',
+      className: 'min-w-[200px] max-w-[300px]',
       mobileVisibility: 'always'
     },
     {

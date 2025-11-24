@@ -162,6 +162,10 @@ export const listUserMatchesInLadder = query({
       winStreakBonus: v.optional(v.boolean()),
       straightSets: v.optional(v.boolean()),
       bagelSetsWonByWinner: v.optional(v.number()),
+      winnerEloBefore: v.optional(v.number()),
+      loserEloBefore: v.optional(v.number()),
+      winnerEloAfter: v.optional(v.number()),
+      loserEloAfter: v.optional(v.number()),
       sets: v.array(v.object({
         _id: v.id("match_sets"),
         _creationTime: v.number(),
@@ -485,6 +489,10 @@ export const listRecentMatches = query({
       winStreakBonus: v.optional(v.boolean()),
       straightSets: v.optional(v.boolean()),
       bagelSetsWonByWinner: v.optional(v.number()),
+      winnerEloBefore: v.optional(v.number()),
+      loserEloBefore: v.optional(v.number()),
+      winnerEloAfter: v.optional(v.number()),
+      loserEloAfter: v.optional(v.number()),
       sets: v.array(v.object({
         _id: v.id("match_sets"),
         _creationTime: v.number(),
@@ -512,7 +520,7 @@ export const listRecentMatches = query({
   handler: async (ctx, { limit = 5 }) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
-      throw new Error("Not authenticated");
+      return { matches: [] };
     }
 
     // Get current user from database
